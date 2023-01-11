@@ -1,15 +1,17 @@
-import discord
-import database
+import datetime
 import json
 import re
 import sqlite3
+
+import discord
 import google.auth
-import datetime
 from discord.ext import commands
-from database import *
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
+
+import database
+from database import *
 
 intents = discord.Intents().all()
 bot = commands.Bot(command_prefix=">", intents=intents)

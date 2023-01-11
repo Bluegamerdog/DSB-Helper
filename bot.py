@@ -2,10 +2,9 @@ import datetime
 import json
 import re
 import sqlite3
-
 import discord
-import google.auth
 from discord.ext import commands
+import google.auth
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
@@ -23,7 +22,7 @@ blocknumber = "1"
 start_date = ""
 end_date = ""
 
-##### EMBED COLORS ####
+##### EMBED COLORS ###
 global BasiccommandCOL
 global UserCommandsCOL
 global HRCommandsCOL

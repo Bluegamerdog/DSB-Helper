@@ -69,8 +69,20 @@ async def on_command_error(ctx, error):
     except Exception as e:
         print("Some shit happened: " + str(error))
         print("Error from try catch : " + str(e))
-
-
+        
+async def format_user(user_name):
+    for i in range(len(user_name)):
+        if(user_name[i] != ' '):
+            break
+        else:
+            user_name = user_name[1:]
+            
+    for i in user_name[::-1]:
+        if(i != " "):
+            break
+        else:
+            user_name = user_name[:-1]    
+    return user_name
 
 @bot.event
 async def on_reaction_add(reaction, user):
@@ -293,21 +305,6 @@ async def reset(ctx):
     else:
         embed = discord.Embed(color=ErrorCOL, description=f"You do not have permission to use this command.")
         await ctx.send(embed=embed)
-    
-    
-async def format_user(user_name):
-    for i in range(len(user_name)):
-        if(user_name[i] != ' '):
-            break
-        else:
-            user_name = user_name[1:]
-            
-    for i in user_name[::-1]:
-        if(i != " "):
-            break
-        else:
-            user_name = user_name[:-1]    
-    return user_name
             
 @bot.command()
 async def viewpoints(ctx, user: discord.User):
@@ -349,28 +346,6 @@ async def soup(ctx):
                 print(e)
                 embed = discord.Embed(color=ErrorCOL, description=f"An error occurred while trying to add the role.")
                 await ctx.send(embed=embed)
-                
-@bot.command()
-async def rloa(ctx):
-    print("Command found")
-    conversation = await ctx.prompt(
-        'What is your departure date? (e.g. 2022-12-22)', timeout=30)
-    departure_date = conversation.content
-    conversation = await ctx.prompt(
-        'What is your return date? (e.g. 2022-12-22)', timeout=30)
-    return_date = conversation.content
-    conversation = await ctx.prompt(
-        'What is the reason for your leave of absence?', timeout=30)
-    reason = conversation.content
-
-    embed = discord.Embed(title=f'Leave of Absence Request - {ctx.message.author.mention}',
-                          color=discord.Color.green())
-    embed.add_field(name='Departure Date', value=departure_date)
-    embed.add_field(name='Return Date', value=return_date)
-    embed.add_field(name='Reason', value=reason)
-
-    # send the message embed to the current channel
-    await ctx.send(embed=embed)
 
 
 

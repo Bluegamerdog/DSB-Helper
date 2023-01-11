@@ -14,6 +14,8 @@ from googleapiclient.discovery import build
 intents = discord.Intents().all()
 bot = commands.Bot(command_prefix=">", intents=intents)
 
+print("bruh")
+
 global start_date
 global end_date
 global blocknumeber

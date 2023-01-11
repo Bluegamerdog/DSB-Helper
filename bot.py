@@ -14,16 +14,12 @@ from googleapiclient.discovery import build
 intents = discord.Intents().all()
 bot = commands.Bot(command_prefix=">", intents=intents)
 
-print("bruh")
-
 global start_date
 global end_date
 global blocknumeber
 blocknumber = "1"
 start_date = ""
 end_date = ""
-#start_date = "1672617600"
-#end_date = "1673827200"
 
 config_file = open("config.json")
 config = json.load(config_file)

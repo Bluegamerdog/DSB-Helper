@@ -1,0 +1,11 @@
+{
+
+    "main_bot" : "The MAIN Bot is running and ready to use!",
+    "help_help" : "Shows a list of all commands and their descriptions",
+    "points_help" : "View your points using this command.",
+    "leaderboard_help" : "Shows a list of everyones points.",
+    "ping_help" : "Check the bot's latency using this command",
+    "whois_help" : "View information about yourself or another member using this command.",
+    "bot_token" : "MTA1NjU5NjAxNTAzMDk5NzAyMg.GjP1md.sDTk87UQD17N-fiH0uDODf5SOohxa2A4CvPBkQ"
+    
+    }

@@ -27,9 +27,9 @@ global BasiccommandCOL
 global UserCommandsCOL
 global HRCommandsCOL
 global ErrorCOL
-BasiccommandCOL = 0x69ABAB
-UserCommandsCOL = 0x09D0EF
-HRCommandsCOL = 0x0B0B45
+BasiccommandCOL = 0xFFFFFF
+UserCommandsCOL = 0x0B0B45
+HRCommandsCOL = 0x000000
 ErrorCOL = 0xB3202C
 
 config_file = open("config.json")
@@ -93,7 +93,10 @@ async def on_reaction_add(reaction, user):
             if(last_user_count < page * 10):
                 return
             rows = get_users(page+1)
-            embed = discord.Embed(title =f"Point Overview - Block {blocknumber}", description=f"Current quota block ending <t:{end_date}:R>.\n| <t:{start_date}> - <t:{end_date}> |", color=0x0B0B45)
+            if end_date == "" or start_date == "" or blocknumber == "":
+                embed = discord.Embed(title =f"Point Overview - Block {blocknumber}", description=f"Current quota block has not yet been set-up. \nPlease ping a member of DSBPC+.", color=UserCommandsCOL)
+            else:
+                embed = discord.Embed(title =f"Point Overview - Block {blocknumber}", description=f"Current quota block ending <t:{end_date}:R>.\n| <t:{start_date}> - <t:{end_date}> |", color=UserCommandsCOL)
             for row in rows:
                 if(row[1] != None and row[2] != None):
                     user_name = bot.get_user(int(row[1]))
@@ -113,7 +116,10 @@ async def on_reaction_add(reaction, user):
             if(page == 1):
                 return
             rows = get_users(page-1)
-            embed = discord.Embed(title =f"Point Overview - Block {blocknumber}", description=f"Current quota block ending <t:{end_date}:R>.\n| <t:{start_date}> - <t:{end_date}> |", color=0x0B0B45)
+            if end_date == "" or start_date == "" or blocknumber == "":
+                embed = discord.Embed(title =f"Point Overview - Block {blocknumber}", description=f"Current quota block has not yet been set-up. \nPlease ping a member of DSBPC+.", color=UserCommandsCOL)
+            else:
+                embed = discord.Embed(title =f"Point Overview - Block {blocknumber}", description=f"Current quota block ending <t:{end_date}:R>.\n| <t:{start_date}> - <t:{end_date}> |", color=UserCommandsCOL)
             if(last_user_count <= page * 10):
                 last_user_count -= 10 + (last_user_count-1) % 10
             else:
@@ -136,95 +142,99 @@ async def on_reaction_add(reaction, user):
             await reaction.message.add_reaction(u"\u25B6")
             
     
-        
-@bot.command(pass_context = True)
-async def points(ctx, command = None, username = None, point = None):
-    print(f"command: {command} | username: {username} | points: {point}")
+pointscmd = bot.create_group("points")
 
-    #print(username)
-    if(command == None or point == None or username == None):
-        if(command == None and point == None and username == None):
-            points = get_user_point(ctx.message.author.id)
-            embed = discord.Embed(description=f"You have {points} points!", color=UserCommandsCOL )
-            await ctx.send(embed=embed)
+ 
+@pointscmd.command(description="Adds points to a user. [DSBPC+]")
+async def add(ctx, username = None, point = None):
+    user = ctx.author
+    if(not authorizationz(user)):
+        embed = discord.Embed(color=ErrorCOL, description=f"You do not have permission to add points.")
+        await ctx.respond(embed=embed)
+        return
+    if(point.isdigit()):
+        username_id = username[2:]
+        username_id = username_id[:-1]
+        username_id = username_id.replace("!","")
+        if(username_id.isdigit()):
+            add_points(username_id, point)
         else:
-            embed = discord.Embed(color=ErrorCOL, description=f"Invalid command. \nUse !help to see a list of availble commands.")
-            await ctx.send(embed=embed)
-            return
-            
-    user = ctx.message.author
-    
-    if(command.lower() == "add"):
-        if(not authorizationz(user)):
-            #await request_points(ctx)
-            embed = discord.Embed(color=ErrorCOL, description=f"You do not have permission to add points.")
-            await ctx.send(embed=embed)
-            return
-        if(point.isdigit()):
-            username_id = username[2:]
-            username_id = username_id[:-1]
-            username_id = username_id.replace("!","")
-            if(username_id.isdigit()):
-                add_points(username_id, point)
-            else:
-                from_server = ctx.guild
-                user = from_server.get_member_named(username)
-                if(user == None):
-                    embed = discord.Embed(ccolor=ErrorCOL, description=f"Invalid user")
-                    await ctx.send(embed=embed)
-                    await ctx.send("Invalid user")
-                    return
-                else:
-                    add_points(user.id, point)
-            embed = discord.Embed(color=HRCommandsCOL, description=f"Points added.")
-            await ctx.send(embed=embed)
-        else:
-            #await request_points()
-            embed = discord.Embed(color=ErrorCOL, description=f"Invalid point number.")
-            await ctx.send(embed=embed)
-    else:
-        if(command.lower() == "remove"):
-            if(not authorizationz(user)):
-                #await request_points(ctx)
-                embed = discord.Embed(color=ErrorCOL, description=f"You do not have permission to remove points.")
-                await ctx.send(embed=embed)
+            from_server = ctx.guild
+            user = from_server.get_member_named(username)
+            if(user == None):
+                embed = discord.Embed(ccolor=ErrorCOL, description=f"Invalid user")
+                await ctx.respond(embed=embed)
+                await ctx.respond("Invalid user")
                 return
-            if(point.isdigit()):
-                username_id = username[2:]
-                username_id = username_id[:-1]
-                username_id = username_id.replace("!","")
-                if(username_id.isdigit()):
-                    remove_points(username_id, point)
-                else:
-                    from_server = ctx.guild
-                    user = from_server.get_member_named(username)
-                    if(user == None):
-                        embed = discord.Embed(color=ErrorCOL, description=f"Invalid User.")
-                        await ctx.send(embed=embed)
-                        return
-                    else:
-                        remove_points(user.id,point)
-                embed = discord.Embed(color=HRCommandsCOL, description=f"Points removed.")
-                await ctx.send(embed=embed)
             else:
-                embed = discord.Embed(color=ErrorCOL, description=f"Invalid point number.")
-                await ctx.send(embed=embed)
+                add_points(user.id, point)
+        
+        if int(point) <= 1:
+            embed = discord.Embed(color=HRCommandsCOL, description=f"Added {point} point to {username}")
         else:
-            embed = discord.Embed(color=ErrorCOL, description=f"Invalid command. \nUse !help to see a list of availble commands.")
-            await ctx.send(embed=embed)
+            embed = discord.Embed(color=HRCommandsCOL, description=f"Added {point} points to {username}")
+        await ctx.respond(embed=embed)
+    else:
+        embed = discord.Embed(color=ErrorCOL, description=f"Invalid point number.")
+        await ctx.respond(embed=embed)       
+    
+@pointscmd.command(description="Removes points from a user. [DSBPC+]")
+async def remove(ctx, username = None, point = None):
+    user = ctx.author
+    if(not authorizationz(user)):
+        #await request_points(ctx)
+        embed = discord.Embed(color=ErrorCOL, description=f"You do not have permission to remove points.")
+        await ctx.respond(embed=embed)
+        return
+    if(point.isdigit()):
+        username_id = username[2:]
+        username_id = username_id[:-1]
+        username_id = username_id.replace("!","")
+        if(username_id.isdigit()):
+            remove_points(username_id, point)
+        else:
+            from_server = ctx.guild
+            user = from_server.get_member_named(username)
+            if(user == None):
+                embed = discord.Embed(color=ErrorCOL, description=f"Invalid User.")
+                await ctx.respond(embed=embed)
+                return
+            else:
+                remove_points(user.id,point)
+        if int(point) <= 1:
+            embed = discord.Embed(color=HRCommandsCOL, description=f"Removed {point} point from {username}")
+        else:
+            embed = discord.Embed(color=HRCommandsCOL, description=f"Removed {point} points from {username}")
+        await ctx.respond(embed=embed)
+    else:
+        embed = discord.Embed(color=ErrorCOL, description=f"Invalid point number.")
+        await ctx.respond(embed=embed)
+        
+@pointscmd.command(description="View someone else's current point count.")
+async def view(ctx, user:discord.User=None):
+    points = get_user_points(user.id)
+    if points:
+        embed = discord.Embed(color=UserCommandsCOL, description=f"{user.name} has {points} points.")
+    else:
+        embed = discord.Embed(color=UserCommandsCOL, description=f"{user.name} has no points.")
+    await ctx.respond(embed=embed)
+    
+@bot.slash_command(description="View your point count.")
+async def mypoints(ctx):
+    points = get_user_point(ctx.author.id)
+    if points:
+        embed = discord.Embed(description=f"You have {points} points!", color=UserCommandsCOL )
+    else:
+        embed = discord.Embed(color=UserCommandsCOL, description=f"You have no points.")
+    await ctx.respond(embed=embed)
 
-
-@bot.command(pass_context = True)
+@bot.slash_command(pass_context = True, description="Shows a list of basic commands.")
 async def help(ctx):
     embed = discord.Embed(title = "Command list", color=BasiccommandCOL)
-    embed.add_field(name = ">help", value = config["help_help"], inline = False)
-    embed.add_field(name = ">points", value = config["points_help"], inline = False)
-    embed.add_field(name = ">pov", value = config["leaderboard_help"], inline = False)
-    embed.add_field(name = ">ping", value = config["ping_help"], inline = False)
-    embed.add_field(name = ">whois", value = config["whois_help"], inline = False)
-    await ctx.send(embed = embed)
+    embed.add_field(name = "Now based on slash-commands. (01/12/2023)", value="")
+    await ctx.respond(embed = embed)
     
-@bot.command()
+@bot.slash_command(description="Displays a user's information.")
 async def whois(ctx, user:discord.Member=None):
         roles = []
         if user is None:
@@ -236,32 +246,31 @@ async def whois(ctx, user:discord.Member=None):
         roles.reverse()
         ct = user.created_at.strftime("%a, %d %b, %Y | %H:%M")
         jt = user.joined_at.strftime("%a, %d %b %Y | %H:%M")
-        embed=discord.Embed(description=user.mention,color=BasiccommandCOL,timestamp=ctx.message.created_at)
+        if user:
+            embed=discord.Embed(description=f"{user.mention}  •  ID: {user.id}",color=BasiccommandCOL)
         embed.set_author(icon_url=user.avatar, name=f"{user}'s User Info")
         embed.set_thumbnail(url=user.avatar)
-        embed.set_footer(text=f'ID: {user.id}')
+        #embed.set_footer(text=f'ID: {user.id}')
         embed.add_field(name="Joined Server On:", value=jt,inline=True)
         embed.add_field(name="Created Account On:", value=ct,inline=True)
         if len(str(" | ".join([x.mention for x in user.roles]))) > 1024:
             embed.add_field(name=f"Roles[{len(user.roles)}]:", value="Too many to display.", inline=False)
         else:
             role_count = len([role for role in user.roles if role.name != '@everyone'])
-            embed.add_field(name=f"Roles[{role_count}]:", value=" | ".join(roles),inline=False)
-
-            
-        embed.add_field(name="Bot:", value=f'{("Yes" if user.bot==True else "No")}',inline=True)
-        await ctx.send(embed=embed)
+            embed.add_field(name=f"Roles[{role_count}]:", value=" | ".join(roles),inline=False)   
+        #embed.add_field(name="Bot:", value=f'{("Yes" if user.bot==True else "No")}',inline=False)
+        await ctx.respond(embed=embed)
     
 
-@bot.command()
+@bot.slash_command(description="Shows the bot's response time.")
 @commands.cooldown(1, 5, commands.BucketType.user)
 async def ping(ctx):
-    await ctx.send(f"🏓Pong! Took `{round(bot.latency * 1000)}`ms")
+    await ctx.respond(f"🏓Pong! Took `{round(bot.latency * 1000)}`ms")
 
 
-@bot.command()
+@bot.slash_command(description="Updates the quota block start to end date. [DSBPC+]")
 async def updatequota(ctx, start_date_new: int, end_date_new: int, blocknumber_new: int):
-    user = ctx.message.author
+    user = ctx.author
     
     if authorizationz(user):
         global start_date
@@ -270,16 +279,19 @@ async def updatequota(ctx, start_date_new: int, end_date_new: int, blocknumber_n
         blocknumber = blocknumber_new
         start_date = start_date_new
         end_date = end_date_new
-        embed = discord.Embed(color=HRCommandsCOL, description=f"Quota block updated to: <t:{start_date}> - <t:{end_date}> || Block {blocknumber}")
-        await ctx.send(embed=embed)
+        embed = discord.Embed(color=HRCommandsCOL, description=f"Quota block updated to:\n<t:{start_date}> - <t:{end_date}> || Block {blocknumber}")
+        await ctx.respond(embed=embed)
     else:
         embed = discord.Embed(color=ErrorCOL, description=f"You do not have permission to run this command.")
-        await ctx.send(embed=embed)
+        await ctx.respond(embed=embed)
 
-@bot.command(pass_context = True)
+@bot.slash_command(pass_context = True, description="Shows leaderboard for points.")
 async def pov(ctx):
     rows = get_users(1)
-    embed = discord.Embed(title =f"Point Overview - Block {blocknumber}", description=f"Current quota block ending <t:{end_date}:R>.\n| <t:{start_date}> - <t:{end_date}> |", color=UserCommandsCOL)
+    if end_date == "" or start_date == "" or blocknumber == "":
+        embed = discord.Embed(title =f"Point Overview - Block {blocknumber}", description=f"Current quota block has not yet been set-up. \nPlease ping a member of DSBPC+.", color=UserCommandsCOL)
+    else:
+        embed = discord.Embed(title =f"Point Overview - Block {blocknumber}", description=f"Current quota block ending <t:{end_date}:R>.\n| <t:{start_date}> - <t:{end_date}> |", color=UserCommandsCOL)
     count = 1
     for row in rows:
         if(row[1] != None and row[2] != None):
@@ -287,66 +299,71 @@ async def pov(ctx):
             user = "#" + str(count) + " | " + str(user)
             embed.add_field(name = user, value = '{:,}'.format(row[2]), inline=False)
             count += 1 
-    msg_sent = await ctx.send(embed=embed)
-    add_leaderboard(ctx.message.author.id, msg_sent.id, count)
+    msg_sent = await ctx.respond(embed=embed)
+    add_leaderboard(ctx.author.id, msg_sent.id, count)
     if(count == 11):
         await msg_sent.add_reaction(u"\u25B6")
     
     
-@bot.command(pass_context=True)
+@bot.slash_command(pass_context=True, description="Resets the points of all users to zero. [DSBPC+]")
 async def reset(ctx):
-    user = ctx.message.author
-
+    user = ctx.author
     if authorizationz(user):
-        # Reset the points
-        # Add code to reset the points here
-        await reset_database()
-        embed = discord.Embed(color=HRCommandsCOL, description=f"Point reset successful.")
-        await ctx.send(embed=embed)
+        # Send a message asking the user to confirm the reset
+        embed = discord.Embed(color=HRCommandsCOL, description=f"Are you sure you want to reset the points? Respond with 'yes' to confirm.")
+        await ctx.respond(embed=embed)
+        
+        # Wait for the user's response
+        def check(m):
+            return m.content == 'yes' and m.channel == ctx.channel and m.author == ctx.author
+        try:
+            response = await bot.wait_for('message', check=check, timeout=10)
+        except asyncio.TimeoutError:
+            embed = discord.Embed(color=ErrorCOL, description=f"Timed out waiting for response.")
+            await ctx.respond(embed=embed)
+        else:
+            if response.content == 'yes':
+                await reset_database()
+                embed = discord.Embed(color=HRCommandsCOL, description=f"Point reset successful.")
+                await ctx.respond(embed=embed)
     else:
         embed = discord.Embed(color=ErrorCOL, description=f"You do not have permission to use this command.")
-        await ctx.send(embed=embed)
-            
-@bot.command()
-async def viewpoints(ctx, user: discord.User):
-    points = get_user_points(user.id)
-    if points:
-        embed = discord.Embed(color=UserCommandsCOL, description=f"{user.name} has {points} points.")
-        await ctx.send(embed=embed)
-    else:
-        embed = discord.Embed(color=UserCommandsCOL, description=f"{user.name} has no points.")
-        await ctx.send(embed=embed)
+        await ctx.respond(embed=embed)
 
 
 #Added 01/08/2023 
-@bot.command()
+@bot.slash_command(description="Gives/revokes the Op. Supervisor Role. [EDS+]")
 async def soup(ctx):
-    user = ctx.message.author
+    user = ctx.author
     role_name = "[DSB] Operation Supervisors"
     role = discord.utils.get(ctx.guild.roles, name=role_name)
     
     if mrs(user)==False:
         embed = discord.Embed(color=UserCommandsCOL, description=f"You need to be EDS+ to use this command.")
-        await ctx.send(embed=embed)
+        await ctx.respond(embed=embed)
     else:
         if role in ctx.author.roles:
             try:
                 await ctx.author.remove_roles(role)
                 embed = discord.Embed(color=UserCommandsCOL, description=f"Role successfully removed.")
-                await ctx.send(embed=embed)
+                await ctx.respond(embed=embed)
             except Exception as e:
                 print(e)
                 embed = discord.Embed(color=ErrorCOL, description=f"An error occurred while trying to remove the role.")
-                await ctx.send(embed=embed)
+                await ctx.respond(embed=embed)
         else:
             try:
                 await ctx.author.add_roles(role)
                 embed = discord.Embed(color=UserCommandsCOL, description=f"Role successfully added.")
-                await ctx.send(embed=embed)
+                await ctx.respond(embed=embed)
             except Exception as e:
                 print(e)
                 embed = discord.Embed(color=ErrorCOL, description=f"An error occurred while trying to add the role.")
-                await ctx.send(embed=embed)
+                await ctx.respond(embed=embed)
+
+@bot.slash_command(description="WORK IN PROGRESS")
+async def rloa(ctx):
+    await ctx.respond("This command is not yet done...")
 
 
 

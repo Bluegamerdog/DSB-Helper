@@ -1,15 +1,17 @@
-import datetime
+import asyncio
 import json
 import re
 import sqlite3
+
 import discord
 from discord.ext import commands
-import google.auth
-from google.auth.transport.requests import Request
-from google.oauth2.credentials import Credentials
-from googleapiclient.discovery import build
+from discord.ui import Button, View
 
-import database
+#import google.auth
+#from google.auth.transport.requests import Request
+#from google.oauth2.credentials import Credentials
+#from googleapiclient.discovery import build
+
 from database import *
 
 intents = discord.Intents().all()
@@ -36,7 +38,6 @@ config_file = open("config.json")
 config = json.load(config_file)
 
 bot.remove_command("help")
-bot.remove_command("finish")
 
 @bot.event
 async def on_ready():
@@ -94,18 +95,18 @@ async def on_reaction_add(reaction, user):
                 return
             rows = get_users(page+1)
             if end_date == "" or start_date == "" or blocknumber == "":
-                embed = discord.Embed(title =f"Point Overview - Block {blocknumber}", description=f"Current quota block has not yet been set-up. \nPlease ping a member of DSBPC+.", color=UserCommandsCOL)
+                embedinfo = discord.Embed(description="-----------------------------------------------", color=UserCommandsCOL)
             else:
-                embed = discord.Embed(title =f"Point Overview - Block {blocknumber}", description=f"Current quota block ending <t:{end_date}:R>.\n| <t:{start_date}> - <t:{end_date}> |", color=UserCommandsCOL)
+                embedinfo = discord.Embed(description="----------------------------------------------------------", color=UserCommandsCOL)
             for row in rows:
                 if(row[1] != None and row[2] != None):
                     user_name = bot.get_user(int(row[1]))
                     user_name = "#" + str(last_user_count) + " | " + str(user_name)
-                    embed.add_field(name = user_name, value = '{:,}'.format(row[2]), inline=False)
+                    embedinfo.add_field(name = user_name, value = '{:,}'.format(row[2]), inline=False)
                     last_user_count += 1
             
             update_leaderboard(page + 1, last_user_count, reaction.message.id)
-            await reaction.message.edit(embed = embed)
+            await reaction.message.edit(embed = embedinfo)
             await reaction.message.clear_reactions()
             await reaction.message.add_reaction(u"\u25C0")
             if(last_user_count > (page+1) * 10):
@@ -117,9 +118,9 @@ async def on_reaction_add(reaction, user):
                 return
             rows = get_users(page-1)
             if end_date == "" or start_date == "" or blocknumber == "":
-                embed = discord.Embed(title =f"Point Overview - Block {blocknumber}", description=f"Current quota block has not yet been set-up. \nPlease ping a member of DSBPC+.", color=UserCommandsCOL)
+                embedinfo = discord.Embed(description="-----------------------------------------------", color=UserCommandsCOL)
             else:
-                embed = discord.Embed(title =f"Point Overview - Block {blocknumber}", description=f"Current quota block ending <t:{end_date}:R>.\n| <t:{start_date}> - <t:{end_date}> |", color=UserCommandsCOL)
+                embedinfo = discord.Embed(description="----------------------------------------------------------", color=UserCommandsCOL)
             if(last_user_count <= page * 10):
                 last_user_count -= 10 + (last_user_count-1) % 10
             else:
@@ -130,16 +131,17 @@ async def on_reaction_add(reaction, user):
                 if(row[1] != None and row[2] != None):
                     user_name = bot.get_user(int(row[1]))
                     user_name = "#" + str(last_user_count) + " | " + str(user_name)
-                    embed.add_field(name = user_name, value = '{:,}'.format(row[2]), inline=False)
+                    embedinfo.add_field(name = user_name, value = '{:,}'.format(row[2]), inline=False)
                     last_user_count += 1
             
             
             update_leaderboard(page - 1, last_user_count, reaction.message.id)
-            await reaction.message.edit(embed = embed)
+            await reaction.message.edit(embed = embedinfo)
             await reaction.message.clear_reactions()
             if(page - 1 > 1):
                 await reaction.message.add_reaction(u"\u25C0")
             await reaction.message.add_reaction(u"\u25B6")
+
             
     
 pointscmd = bot.create_group("points")
@@ -162,7 +164,7 @@ async def add(ctx, username = None, point = None):
             from_server = ctx.guild
             user = from_server.get_member_named(username)
             if(user == None):
-                embed = discord.Embed(ccolor=ErrorCOL, description=f"Invalid user")
+                embed = discord.Embed(color=ErrorCOL, description=f"Invalid user")
                 await ctx.respond(embed=embed)
                 await ctx.respond("Invalid user")
                 return
@@ -219,6 +221,31 @@ async def view(ctx, user:discord.User=None):
         embed = discord.Embed(color=UserCommandsCOL, description=f"{user.name} has no points.")
     await ctx.respond(embed=embed)
     
+@pointscmd.command(pass_context = True, description="Shows leaderboard for points.")
+async def overview(ctx):
+    rows = get_users(1)
+    embed = discord.Embed(title =f"Point Overview - Block {blocknumber}", description=f"Current quota block ending <t:{end_date}:R>.\n| <t:{start_date}> - <t:{end_date}> |", color=UserCommandsCOL)
+    if end_date == "" or start_date == "" or blocknumber == "":
+        embed = discord.Embed(title =f"Point Overview - Block {blocknumber}", description=f"Current quota block has not yet been set-up. \nPlease ping a member of DSBPC+.", color=UserCommandsCOL)
+    else:
+        embed = discord.Embed(title =f"Point Overview - Block {blocknumber}", description=f"Current quota block ending <t:{end_date}:R>.\n| <t:{start_date}> - <t:{end_date}> |", color=UserCommandsCOL)
+    count = 1
+    if end_date == "" or start_date == "" or blocknumber == "":
+        embedinfo = discord.Embed(description="-----------------------------------------------", color=UserCommandsCOL)
+    else:
+        embedinfo = discord.Embed(description="----------------------------------------------------------", color=UserCommandsCOL)
+    for row in rows:
+        if(row[1] != None and row[2] != None):
+            user = bot.get_user(int(row[1]))
+            user = "#" + str(count) + " | " + str(user)
+            embedinfo.add_field(name = user, value = '{:,}'.format(row[2]), inline=False)
+            count += 1
+    await ctx.respond(embed=embed)         
+    msg_sent = await ctx.send(embed=embedinfo)
+    add_leaderboard(ctx.author.id, msg_sent.id, count)
+    if(count > 10):
+        await msg_sent.add_reaction(u"\u25B6")
+    
 @bot.slash_command(description="View your point count.")
 async def mypoints(ctx):
     points = get_user_point(ctx.author.id)
@@ -228,8 +255,8 @@ async def mypoints(ctx):
         embed = discord.Embed(color=UserCommandsCOL, description=f"You have no points.")
     await ctx.respond(embed=embed)
 
-@bot.slash_command(pass_context = True, description="Shows a list of basic commands.")
-async def help(ctx):
+@bot.slash_command(pass_context = True, description="Shows bot infos.")
+async def info(ctx):
     embed = discord.Embed(title = "Command list", color=BasiccommandCOL)
     embed.add_field(name = "Now based on slash-commands. (01/12/2023)", value="")
     await ctx.respond(embed = embed)
@@ -246,8 +273,7 @@ async def whois(ctx, user:discord.Member=None):
         roles.reverse()
         ct = user.created_at.strftime("%a, %d %b, %Y | %H:%M")
         jt = user.joined_at.strftime("%a, %d %b %Y | %H:%M")
-        if user:
-            embed=discord.Embed(description=f"{user.mention}  •  ID: {user.id}",color=BasiccommandCOL)
+        embed=discord.Embed(description=f"{user.mention}  •  ID: {user.id}",color=BasiccommandCOL)
         embed.set_author(icon_url=user.avatar, name=f"{user}'s User Info")
         embed.set_thumbnail(url=user.avatar)
         #embed.set_footer(text=f'ID: {user.id}')
@@ -285,25 +311,6 @@ async def updatequota(ctx, start_date_new: int, end_date_new: int, blocknumber_n
         embed = discord.Embed(color=ErrorCOL, description=f"You do not have permission to run this command.")
         await ctx.respond(embed=embed)
 
-@bot.slash_command(pass_context = True, description="Shows leaderboard for points.")
-async def pov(ctx):
-    rows = get_users(1)
-    if end_date == "" or start_date == "" or blocknumber == "":
-        embed = discord.Embed(title =f"Point Overview - Block {blocknumber}", description=f"Current quota block has not yet been set-up. \nPlease ping a member of DSBPC+.", color=UserCommandsCOL)
-    else:
-        embed = discord.Embed(title =f"Point Overview - Block {blocknumber}", description=f"Current quota block ending <t:{end_date}:R>.\n| <t:{start_date}> - <t:{end_date}> |", color=UserCommandsCOL)
-    count = 1
-    for row in rows:
-        if(row[1] != None and row[2] != None):
-            user = bot.get_user(int(row[1]))
-            user = "#" + str(count) + " | " + str(user)
-            embed.add_field(name = user, value = '{:,}'.format(row[2]), inline=False)
-            count += 1 
-    msg_sent = await ctx.respond(embed=embed)
-    add_leaderboard(ctx.author.id, msg_sent.id, count)
-    if(count == 11):
-        await msg_sent.add_reaction(u"\u25B6")
-    
     
 @bot.slash_command(pass_context=True, description="Resets the points of all users to zero. [DSBPC+]")
 async def reset(ctx):
@@ -317,7 +324,7 @@ async def reset(ctx):
         def check(m):
             return m.content == 'yes' and m.channel == ctx.channel and m.author == ctx.author
         try:
-            response = await bot.wait_for('message', check=check, timeout=10)
+            response = await bot.wait_for('message', check=check, timeout=5)
         except asyncio.TimeoutError:
             embed = discord.Embed(color=ErrorCOL, description=f"Timed out waiting for response.")
             await ctx.respond(embed=embed)
@@ -363,7 +370,9 @@ async def soup(ctx):
 
 @bot.slash_command(description="WORK IN PROGRESS")
 async def rloa(ctx):
-    await ctx.respond("This command is not yet done...")
+    embed = discord.Embed(color=HRCommandsCOL, description=f"This command is not yet done...")
+    await ctx.respond(embed=embed)
+
 
 
 

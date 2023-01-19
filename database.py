@@ -42,10 +42,10 @@ def remove_points(username_id, points):
 
 def add_points(username_id, points):
     t = (username_id, )
-    if(check_user(username_id) == False and username_id.isdigit()):
+    if(check_user(username_id) == False and type(username_id)==int):
         add_user(username_id)
         add_points_user(username_id,points)
-    elif(username_id.isdigit()):
+    elif(type(username_id)==int):
         add_points_user(username_id,points)
        
 

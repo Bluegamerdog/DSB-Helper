@@ -330,7 +330,7 @@ class InfoboardView(discord.ui.View):
 @bot.tree.command(name="infoboard",description="Shows bot information and a list of commands.")
 async def infoboard(interaction: discord.Interaction):
     embed = discord.Embed(title="**DSB Helper Infoboard**", description="The DSB Helper mainly manages the points based quota system. Provided are infoboards with various commands and information related to the bot. See the dropdown menu below.", color=UserCommandsCOL)
-    embed.add_field(name="Credits", value="Bluegamerdog - Backend API and bot host\nObviously_Shush - Frontend & Misc\nThe suffering - Bug testing")
+    embed.add_field(name="Credits", value="Bluegamerdog - Backend API\nOrangePurgatory - Temporary bot host\nObviously_Shush - Frontend & Misc\nThe suffering - Bug testing")
     embed.set_footer(text="DSB Helper 1.0")
     embed.set_thumbnail(url="https://images-ext-1.discordapp.net/external/lnHKwZ40MRhYKuNJpNUS8NQiaekqkgfW9TaGj-B5Yg0/https/tr.rbxcdn.com/580b2e0cd698decfa585464b50a4278c/150/150/Image/Png")
     await interaction.response.send_message(embed=embed, view=InfoboardView())

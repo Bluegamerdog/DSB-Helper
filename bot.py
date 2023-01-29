@@ -55,7 +55,7 @@ async def on_ready():
 def authorizationalpha(user): # function to check if user is DSBPC+ 
     roles = user.roles
     for role in roles:
-        if role.name in ["QSO Pre-Command", "QSO Command", "DSB Command"] or role.permissions.administrator:
+        if role.name in ["QSO Pre-Command", "QSO Command", "DSB Command", "Orange"] or role.permissions.administrator:
             return True
     return False
 

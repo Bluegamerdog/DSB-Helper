@@ -179,10 +179,12 @@ async def view(interaction: discord.Interaction, user:discord.Member):
         embed = discord.Embed(color=UserCommandsCOL, description=f"{user.mention} has no points.")
     await interaction.response.send_message(embed=embed)
     
-@pointsgroup.command(name="overview",description="Shows leaderboard for points.")
+@pointsgroup.command(name="overview",description="Shows a leaderboard for everyones points.")
 async def overview(interaction: discord.Interaction):
+    gettingembed = discord.Embed(description="Getting data...")
+    await interaction.response.send_message(embed=gettingembed)
     rows = get_users(1)
-    if end_date == "N/A" or start_date == "N/A" or blocknumber == "N/A":
+    if end_date == "" or start_date == "" or blocknumber == "":
         embed = discord.Embed(title =f"**Point Overview - Block {blocknumber}**", description=f"-----------------------------------------------\nCurrent quota block has not yet been set-up. \nPlease ping a member of DSBPC+.\n-----------------------------------------------", color=UserCommandsCOL)
     else:
         embed = discord.Embed(title =f"**Point Overview - Block {blocknumber}**", description=f"----------------------------------------------------------\nCurrent quota block ending <t:{end_date}:R>.\n| <t:{start_date}> - <t:{end_date}> |\n----------------------------------------------------------", color=UserCommandsCOL)
@@ -190,12 +192,13 @@ async def overview(interaction: discord.Interaction):
     for row in rows:
         if(row[1] != None and row[2] != None):
             user = bot.get_user(int(row[1]))
-            user = "#" + str(count) + " | " + str(user)
+            user = "#" + str(count) + " | " + str(user.display_name)
             embed.add_field(name = user, value = '{:,}'.format(row[2]), inline=False)
             count += 1
-    
-    await interaction.response.send_message(embed=embed)
-    add_leaderboard(interaction.user.id, interaction.id, count)
+    msg_sent = await interaction.edit_original_response(embed=embed)
+    add_leaderboard(interaction.user.id, msg_sent.id, count)
+    if(count > 10):
+        await msg_sent.add_reaction(u"\u25B6")
 
 @pointsgroup.command(name="reset",description="Resets the points of all users to zero. [DSBPC+]")
 async def reset(interaction:discord.Interaction):

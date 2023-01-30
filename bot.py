@@ -1,21 +1,17 @@
 import asyncio
 import json
-import re
-import sqlite3
-import sys
 import os
+import platform
+import sys
 import time
 
 import discord
+from colorama import Back, Fore, Style
 from discord import app_commands
 from discord.ext import commands
 
-#import google.auth
-#from google.auth.transport.requests import Request
-#from google.oauth2.credentials import Credentials
-#from googleapiclient.discovery import build
-
 from database import *
+
 
 config_file = open("config.json")
 config = json.load(config_file)
@@ -43,13 +39,15 @@ ErrorCOL = 0xB3202C
 
 @bot.event
 async def on_ready():
-    print("MAINBOT READY")
-    try:
-        synced = await bot.tree.sync()
-        print(f"Synced {len(synced)} command(s)")
-    except Exception as e:
-        print(e)
-    print("Remember to set quotablock")
+    prfx = (Back.BLACK + Fore.BLUE) + Back.RESET + Fore.WHITE + Style.BRIGHT
+    print(prfx + "|| Logged in as " + Fore.BLUE + bot.user.name + "  at  " + time.strftime("%H:%M:%S UTC", time.gmtime()))
+    print(prfx + "|| Bot ID: " + Fore.BLUE + str(bot.user.id))
+    print(prfx + "|| Discord Version: " + Fore.BLUE + discord.__version__)
+    print(prfx + "|| Python Version: " + Fore.BLUE + str(platform.python_version()))
+    synced = await bot.tree.sync()
+    print(prfx + "|| Slash CMDs Synced: " + Fore.BLUE + str(len(synced)) + " Commands")
+    print(prfx + "-----------------NOTES-----------------")
+    print(prfx + "|| QUOTA BLOCK")
 
 
 def authorizationalpha(user): # function to check if user is DSBPC+ 
@@ -79,20 +77,6 @@ def allmrs(user):
         if role.name in ["Elite Defense Specialist", "Master Sergeant", "[DSB] Squadron Officer", "DSB Pre-Command", "QSO Pre-Command", "QSO Command", "DSB Command"] or role.permissions.administrator:
             return True
     return False
-
-@bot.event
-async def on_message_edit(before, after):
-    if(check_requests(after.id)):
-        update_requests(after.id, -1)
-
-@bot.event
-async def on_command_error(ctx, error):
-    try:
-        #await request_points(ctx)
-        pass
-    except Exception as e:
-        print("Some shit happened: " + str(error))
-        print("Error from try catch : " + str(e))
         
 async def format_user(user_name):
     for i in range(len(user_name)):
@@ -108,63 +92,7 @@ async def format_user(user_name):
             user_name = user_name[:-1]    
     return user_name
 
-'''
-@bot.event
-async def on_reaction_add(reaction, user):
-    if(check_leaderboard(reaction.message.id, user.id)):
-        if(reaction.emoji == u"\u25B6"):
-            page, last_user_count = get_leaderboard_page(reaction.message.id, user.id)
-            if(last_user_count < page * 10):
-                return
-            rows = get_users(page+1)
-            if end_date == "" or start_date == "" or blocknumber == "":
-                embedinfo = discord.Embed(description="-----------------------------------------------", color=UserCommandsCOL)
-            else:
-                embedinfo = discord.Embed(description="----------------------------------------------------------", color=UserCommandsCOL)
-            for row in rows:
-                if(row[1] != None and row[2] != None):
-                    user_name = bot.get_user(int(row[1]))
-                    user_name = "#" + str(last_user_count) + " | " + str(user_name)
-                    embedinfo.add_field(name = user_name, value = '{:,}'.format(row[2]), inline=False)
-                    last_user_count += 1
-            
-            update_leaderboard(page + 1, last_user_count, reaction.message.id)
-            await reaction.message.edit(embed = embedinfo)
-            await reaction.message.clear_reactions()
-            await reaction.message.add_reaction(u"\u25C0")
-            if(last_user_count > (page+1) * 10):
-                await reaction.message.add_reaction(u"\u25B6")
-        
-        if(reaction.emoji == u"\u25C0"):
-            page, last_user_count = get_leaderboard_page(reaction.message.id, user.id)
-            if(page == 1):
-                return
-            rows = get_users(page-1)
-            if end_date == "" or start_date == "" or blocknumber == "":
-                embedinfo = discord.Embed(description="-----------------------------------------------", color=UserCommandsCOL)
-            else:
-                embedinfo = discord.Embed(description="----------------------------------------------------------", color=UserCommandsCOL)
-            if(last_user_count <= page * 10):
-                last_user_count -= 10 + (last_user_count-1) % 10
-            else:
-                last_user_count -= 20
-            
-            
-            for row in rows:
-                if(row[1] != None and row[2] != None):
-                    user_name = bot.get_user(int(row[1]))
-                    user_name = "#" + str(last_user_count) + " | " + str(user_name)
-                    embedinfo.add_field(name = user_name, value = '{:,}'.format(row[2]), inline=False)
-                    last_user_count += 1
-            
-            
-            update_leaderboard(page - 1, last_user_count, reaction.message.id)
-            await reaction.message.edit(embed = embedinfo)
-            await reaction.message.clear_reactions()
-            if(page - 1 > 1):
-                await reaction.message.add_reaction(u"\u25C0")
-            await reaction.message.add_reaction(u"\u25B6")
-'''
+
             
  ## MANEGEMENT COMMANDS ##
 
@@ -268,6 +196,32 @@ async def overview(interaction: discord.Interaction):
     
     await interaction.response.send_message(embed=embed)
     add_leaderboard(interaction.user.id, interaction.id, count)
+
+@pointsgroup.command(name="reset",description="Resets the points of all users to zero. [DSBPC+]")
+async def reset(interaction:discord.Interaction):
+    user = interaction.user
+    if authorizationz(user):
+        # Send a message asking the user to confirm the reset
+        embed = discord.Embed(color=HRCommandsCOL, description=f"Are you sure you want to reset the points? Respond with 'yes' to confirm.")
+        await interaction.response.send_message(embed=embed)
+        
+        # Wait for the user's response
+        def check(m):
+            return m.content == 'yes' and m.channel == interaction.channel and m.author == interaction.user
+        try:
+            response = await bot.wait_for('message', check=check, timeout=10)
+        except asyncio.TimeoutError:
+            embed = discord.Embed(color=ErrorCOL, description=f"Timed out waiting for response.")
+            await response.reply(embed=embed)
+        else:
+            if response.content == 'yes':
+                if authorizationz(response.author):
+                    await reset_database()
+                    embed = discord.Embed(color=HRCommandsCOL, description=f"Point reset successful.")
+                    await response.reply(embed=embed)
+    else:
+        embed = discord.Embed(color=ErrorCOL, description=f"You do not have permission to use this command.")
+        await interaction.response.send_message(embed=embed)
 
 @bot.tree.command(name="mypoints",description="View your point count.")
 async def mypoints(interaction: discord.Interaction):
@@ -382,31 +336,6 @@ async def updatequota(interaction:discord.Interaction, start_date_new: int, end_
         embed = discord.Embed(color=ErrorCOL, description=f"You do not have permission to run this command.")
         await interaction.response.send_message(embed=embed)
 
-@bot.tree.command(name="pointsreset",description="Resets the points of all users to zero. [DSBPC+]")
-async def reset(interaction:discord.Interaction):
-    user = interaction.user
-    if authorizationz(user):
-        # Send a message asking the user to confirm the reset
-        embed = discord.Embed(color=HRCommandsCOL, description=f"Are you sure you want to reset the points? Respond with 'yes' to confirm.")
-        await interaction.response.send_message(embed=embed)
-        
-        # Wait for the user's response
-        def check(m):
-            return m.content == 'yes' and m.channel == interaction.channel and m.author == interaction.user
-        try:
-            response = await bot.wait_for('message', check=check, timeout=10)
-        except asyncio.TimeoutError:
-            embed = discord.Embed(color=ErrorCOL, description=f"Timed out waiting for response.")
-            await interaction.response.send_message(embed=embed)
-        else:
-            if response.content == 'yes':
-                await reset_database()
-                embed = discord.Embed(color=HRCommandsCOL, description=f"Point reset successful.")
-                await interaction.response.send_message(embed=embed)
-    else:
-        embed = discord.Embed(color=ErrorCOL, description=f"You do not have permission to use this command.")
-        await interaction.response.send_message(embed=embed)
-
 @bot.tree.command(name="soup",description="Adds or removes the Op. Supervisor Role. [EDS+]")
 async def soup(interaction:discord.Interaction):
     user = interaction.user
@@ -436,10 +365,6 @@ async def soup(interaction:discord.Interaction):
                 embed = discord.Embed(color=ErrorCOL, description=f"An error occurred while trying to add the role.")
                 await interaction.response.send_message(embed=embed)
 
-@bot.tree.command(name="rloa",description="Used to request an LoA within DSB.")
-async def rloa(interaction:discord.Interaction):
-    embed = discord.Embed(description="Coming soon:tm:...")
-    await interaction.response.send_message(embed=embed)
 
 
 

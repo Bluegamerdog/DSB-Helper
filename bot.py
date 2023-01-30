@@ -53,7 +53,7 @@ async def on_ready():
 def authorizationalpha(user): # function to check if user is DSBPC+ 
     roles = user.roles
     for role in roles:
-        if role.name in ["QSO Pre-Command", "QSO Command", "DSB Command"] or role.permissions.administrator:
+        if role.name in ["QSO Pre-Command", "QSO Command", "DSB Command", "Orange"] or role.permissions.administrator:
             return True
     return False
 
@@ -170,7 +170,6 @@ async def remove(interaction:discord.Interaction,username:discord.Member,point:i
 @pointsgroup.command(name="view",description="View someone else's current point count.")
 async def view(interaction: discord.Interaction, user:discord.Member):
     points = get_user_points(user.id)
-    #print(type(points))
     if points:
         if int(points) <= 1:
             embed = discord.Embed(color=UserCommandsCOL, description=f"{user.mention} has {points} point.")

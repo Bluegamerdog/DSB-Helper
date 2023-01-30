@@ -23,8 +23,8 @@ global start_date
 global end_date
 global blocknumeber
 blocknumber = "N/A"
-start_date = "N/A"
-end_date = "N/A"
+start_date = ""
+end_date = ""
 
 ##### EMBED COLORS ####
 global BasiccommandCOL
@@ -49,6 +49,60 @@ async def on_ready():
     print(prfx + "-----------------NOTES-----------------")
     print(prfx + "|| QUOTA BLOCK")
 
+@bot.event
+async def on_reaction_add(reaction, user):
+    if(reaction.emoji == u"\u25B6") and user.id != bot.user.id:
+        page, last_user_count = get_leaderboard_page(user.id, reaction.message.id)
+        if(last_user_count < page * 10):
+            return
+        rows = get_users(page+1)
+        if end_date == "" or start_date == "" or blocknumber == "N/A":
+            embed = discord.Embed(title =f"**Point Overview - Block {blocknumber}**", description=f"-----------------------------------------------\nCurrent quota block has not yet been set-up. \nPlease ping a member of DSBPC+.\n-----------------------------------------------", color=UserCommandsCOL)
+        else:
+            embed = discord.Embed(title =f"**Point Overview - Block {blocknumber}**", description=f"----------------------------------------------------------\nCurrent quota block ending <t:{end_date}:R>.\n| <t:{start_date}> - <t:{end_date}> |\n----------------------------------------------------------", color=UserCommandsCOL)
+        for row in rows:
+            if(row[1] != None and row[2] != None):
+                user = bot.get_user(int(row[1]))
+                user = "#" + str(last_user_count) + " | " + str(user.display_name)
+                embed.add_field(name = user, value = '{:,}'.format(row[2]), inline=False)
+                last_user_count += 1
+        
+        update_leaderboard(page + 1, last_user_count, reaction.message.id)
+        await reaction.message.edit(embed = embed)
+        await reaction.message.clear_reactions()
+        await reaction.message.add_reaction(u"\u25C0")
+        if(last_user_count > (page+1) * 10):
+            await reaction.message.add_reaction(u"\u25B6")
+    
+    if(reaction.emoji == u"\u25C0") and user.id != bot.user.id:
+        page, last_user_count = get_leaderboard_page(user.id, reaction.message.id)
+        if(page == 1):
+            return
+        rows = get_users(page-1)
+        if end_date == "" or start_date == "" or blocknumber == "N/A":
+            embed = discord.Embed(title =f"**Point Overview - Block {blocknumber}**", description=f"-----------------------------------------------\nCurrent quota block has not yet been set-up. \nPlease ping a member of DSBPC+.\n-----------------------------------------------", color=UserCommandsCOL)
+        else:
+            embed = discord.Embed(title =f"**Point Overview - Block {blocknumber}**", description=f"----------------------------------------------------------\nCurrent quota block ending <t:{end_date}:R>.\n| <t:{start_date}> - <t:{end_date}> |\n----------------------------------------------------------", color=UserCommandsCOL)
+        if(last_user_count <= page * 10):
+            last_user_count -= 10 + (last_user_count-1) % 10
+        else:
+            last_user_count -= 20
+        
+        
+        for row in rows:
+            if(row[1] != None and row[2] != None):
+                user = bot.get_user(int(row[1]))
+                user = "#" + str(last_user_count) + " | " + str(user.display_name)
+                embed.add_field(name = user, value = '{:,}'.format(row[2]), inline=False)
+                last_user_count += 1
+        
+        
+        update_leaderboard(page - 1, last_user_count, reaction.message.id)
+        await reaction.message.edit(embed = embed)
+        await reaction.message.clear_reactions()
+        if(page - 1 > 1):
+            await reaction.message.add_reaction(u"\u25C0")
+        await reaction.message.add_reaction(u"\u25B6")
 
 def authorizationalpha(user): # function to check if user is DSBPC+ 
     roles = user.roles
@@ -184,7 +238,7 @@ async def overview(interaction: discord.Interaction):
     gettingembed = discord.Embed(description="Getting data...")
     await interaction.response.send_message(embed=gettingembed)
     rows = get_users(1)
-    if end_date == "" or start_date == "" or blocknumber == "":
+    if end_date == "" or start_date == "" or blocknumber == "N/A":
         embed = discord.Embed(title =f"**Point Overview - Block {blocknumber}**", description=f"-----------------------------------------------\nCurrent quota block has not yet been set-up. \nPlease ping a member of DSBPC+.\n-----------------------------------------------", color=UserCommandsCOL)
     else:
         embed = discord.Embed(title =f"**Point Overview - Block {blocknumber}**", description=f"----------------------------------------------------------\nCurrent quota block ending <t:{end_date}:R>.\n| <t:{start_date}> - <t:{end_date}> |\n----------------------------------------------------------", color=UserCommandsCOL)

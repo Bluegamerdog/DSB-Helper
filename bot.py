@@ -208,7 +208,16 @@ async def change_status(interaction: discord.Interaction, user:discord.Member=No
         activity = discord.Activity(type=discord.ActivityType.watching, name=f"{user.display_name}")
         await bot.change_presence(activity=activity)
         await interaction.response.send_message(f"Status updated, watching {user.display_name}", ephemeral=True)
-    
+
+@bot.tree.command(name="blue",description="Blue's command...")
+async def custom_message(interaction:discord.Interaction, channel:discord.TextChannel, message:str):
+    allowed_ids = [776226471575683082, 395505414000607237] # Blue and Orange
+    if interaction.user.id in allowed_ids:
+        await channel.send(f"{message}")
+        await interaction.response.send_message("Done", ephemeral=True)
+    else:
+        await interaction.response.send_message("You are not Blue...", ephemeral=True)
+
 ## POINTS GROUP ##
 class PointsGrp(app_commands.Group):
     pass

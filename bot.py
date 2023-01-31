@@ -403,19 +403,17 @@ async def whois(interaction: discord.Interaction, user:discord.Member=None):
 async def ping(interaction: discord.Interaction):
     await interaction.response.send_message(f"🏓Pong! Took `{round(bot.latency * 1000)}`ms")
 
-@bot.tree.command(name="updatequota",description="Updates the quota block number, start and end date. [DSBPC+]")
+@bot.tree.command(name="updatequota",description="Updates the quota block start to end date. [DSBPC+]")
 async def updatequota(interaction:discord.Interaction, start_date_new: int, end_date_new: int, blocknumber_new: int):
     user = interaction.user
     
     if authorizationz(user):
-        global start_date
-        global end_date
-        global blocknumber
-        blocknumber = blocknumber_new
-        start_date = start_date_new
-        end_date = end_date_new
-        embed = discord.Embed(color=HRCommandsCOL, description=f"Quota block updated to:\n<t:{start_date}> - <t:{end_date}> || Block {blocknumber}")
+        update_quota(start_date_new, end_date_new, blocknumber_new)
+        embed = discord.Embed(color=HRCommandsCOL, title="Quota block change")
+        embed.add_field(name="From:", value=f"<t:{start_date}> - <t:{end_date}> || Block {blocknumber}", inline=False)
+        embed.add_field(name="To:", value=f"<t:{start_date_new}> - <t:{end_date_new}> || Block {blocknumber_new}", inline=False)
         await interaction.response.send_message(embed=embed)
+        quota_get()
     else:
         embed = discord.Embed(color=ErrorCOL, description=f"You do not have permission to run this command.")
         await interaction.response.send_message(embed=embed)

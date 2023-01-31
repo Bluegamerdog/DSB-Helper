@@ -310,7 +310,7 @@ async def reset(interaction:discord.Interaction):
 @bot.tree.command(name="mypoints",description="View your point count.")
 async def mypoints(interaction: discord.Interaction):
     points = get_user_point(interaction.user.id)
-    if int(points) <= 1:
+    if points == 1:
         embed = discord.Embed(color=UserCommandsCOL, description=f"You have {points} point.")
     elif points:
         embed = discord.Embed(color=UserCommandsCOL, description=f"You have {points} points!",)

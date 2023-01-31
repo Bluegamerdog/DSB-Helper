@@ -6,19 +6,6 @@ def get_conn():
     cur = conn.cursor()
     return conn, cur
 
-def create_quota_table():
-    conn, cur = get_conn()
-    cur.execute('''CREATE TABLE IF NOT EXISTS quota_table (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    start INTEGER NOT NULL,
-                    end INTEGER NOT NULL,
-                    block INTEGER NOT NULL
-                 );''')
-    conn.commit()
-    print("Made table")
-
-create_quota_table()
-
 def check_user(username_id):
     t = (username_id, )
     conn, cur = get_conn()

@@ -257,7 +257,7 @@ async def view(interaction: discord.Interaction, user:discord.Member):
     if points:
         if points == 1:
             embed = discord.Embed(color=UserCommandsCOL, description=f"{user.mention} has {points} point.")
-        elif points:
+        elif points > 0:
             embed = discord.Embed(color=UserCommandsCOL, description=f"{user.mention} has {points} points.")
     else:
         embed = discord.Embed(color=UserCommandsCOL, description=f"{user.mention} has no points.")
@@ -273,7 +273,7 @@ async def overview(interaction: discord.Interaction):
     for row in rows:
         if(row[1] != None and row[2] != None and row[2] >= 1): # added check for points >= 1
             user = bot.get_user(int(row[1]))
-            user = "#" + str(count) + " | " + str(user.mention)
+            user = "#" + str(count) + " | " + str(user.name)
             embed.add_field(name = user, value = '{:,}'.format(row[2]), inline=False)
             count += 1
     msg_sent = await interaction.edit_original_response(embed=embed)

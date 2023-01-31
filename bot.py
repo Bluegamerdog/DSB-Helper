@@ -197,12 +197,17 @@ async def shutdown(interaction:discord.Interaction):
         await interaction.response.send_message(embed=embed)
 
 @bot.tree.command(name="chst", description=":lo:")
-async def change_status(interaction: discord.Interaction):
-    members = bot.guilds[0].members
-    random_member = random.choice(members)
-    activity = discord.Activity(type=discord.ActivityType.watching, name=f"{random_member.display_name}")
-    await bot.change_presence(activity=activity)
-    await interaction.response.send_message("Status updated", ephemeral=True)
+async def change_status(interaction: discord.Interaction, user:discord.Member=None):
+    if user == None:
+        members = bot.guilds[0].members
+        random_member = random.choice(members)
+        activity = discord.Activity(type=discord.ActivityType.watching, name=f"{random_member.display_name}")
+        await bot.change_presence(activity=activity)
+        await interaction.response.send_message("Status updated, watching randomized", ephemeral=True)
+    else:
+        activity = discord.Activity(type=discord.ActivityType.watching, name=f"{user.display_name}")
+        await bot.change_presence(activity=activity)
+        await interaction.response.send_message(f"Status updated, watching {user.display_name}", ephemeral=True)
     
 ## POINTS GROUP ##
 class PointsGrp(app_commands.Group):

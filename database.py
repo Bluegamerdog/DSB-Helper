@@ -1,12 +1,23 @@
 import sqlite3
 from datetime import datetime
-import time
 
 def get_conn():
     conn = sqlite3.connect('discodatabase.db')
     cur = conn.cursor()
     return conn, cur
 
+def create_quota_table():
+    conn, cur = get_conn()
+    cur.execute('''CREATE TABLE IF NOT EXISTS quota_table (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    start INTEGER NOT NULL,
+                    end INTEGER NOT NULL,
+                    block INTEGER NOT NULL
+                 );''')
+    conn.commit()
+    print("Made table")
+
+create_quota_table()
 
 def check_user(username_id):
     t = (username_id, )
@@ -90,7 +101,25 @@ def update_leaderboard(page, last_user, message_id):
     t = (page, last_user, message_id)
     cur.execute("UPDATE board_tables SET page_number = ? , last_usernumber = ? WHERE message_id = ?", t)
     conn.commit()
+
+def update_quota(start, end, block):
+    conn, cur = get_conn()
+    cur.execute("SELECT * FROM quota_table")
+    data = cur.fetchall()
+    if len(data) == 0:
+        cur.execute("INSERT INTO quota_table (start, end, block) VALUES (?,?,?)", (start, end, block))
+    else:
+        cur.execute("UPDATE quota_table SET start=?, end=?, block=?", (start, end, block))
+    conn.commit()
+
+
+def get_quota():
+    conn, cur = get_conn()
+    cur.execute("SELECT * FROM quota_table")
+    data = cur.fetchall()
+    return data[0][1], data[0][2], data[0][3]
     
+
 def get_users(page = 1):
     page_offset = (page - 1) * 10
     conn, cur = get_conn()
@@ -145,4 +174,3 @@ def get_user_points(user_id):
         return points
     else:
         return None
-

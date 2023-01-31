@@ -2,8 +2,10 @@ import asyncio
 import json
 import os
 import platform
+import re
 import sys
 import time
+import random
 
 import discord
 from colorama import Back, Fore, Style
@@ -19,12 +21,11 @@ config = json.load(config_file)
 bot = commands.Bot(command_prefix=">", intents=discord.Intents().all(),help_command=None)
 tree = app_commands.CommandTree(discord.Client(intents=discord.Intents().all()))
 
-global start_date
-global end_date
-global blocknumeber
-blocknumber = "N/A"
-start_date = ""
-end_date = ""
+def quota_get():
+    global start_date
+    global end_date
+    global blocknumber
+    start_date, end_date, blocknumber = get_quota()
 
 ##### EMBED COLORS ####
 global BasiccommandCOL
@@ -39,15 +40,36 @@ ErrorCOL = 0xB3202C
 
 @bot.event
 async def on_ready():
+    #await bot.change_presence(activity=discord.Activity(type=discord.CustomActivity(name="Spying on OSA...")))
+    quota_get()
+    #Console#
     prfx = (Back.BLACK + Fore.BLUE) + Back.RESET + Fore.WHITE + Style.BRIGHT
     print(prfx + "|| Logged in as " + Fore.BLUE + bot.user.name + "  at  " + time.strftime("%H:%M:%S UTC", time.gmtime()))
     print(prfx + "|| Bot ID: " + Fore.BLUE + str(bot.user.id))
     print(prfx + "|| Discord Version: " + Fore.BLUE + discord.__version__)
     print(prfx + "|| Python Version: " + Fore.BLUE + str(platform.python_version()))
+    print(prfx + "|| Syncing commands...")
     synced = await bot.tree.sync()
-    print(prfx + "|| Slash CMDs Synced: " + Fore.BLUE + str(len(synced)) + " Commands")
+    print("\033[2K" + prfx + "|| Slash CMDs Synced: " + Fore.BLUE + str(len(synced)) + " Commands")
     print(prfx + "-----------------NOTES-----------------")
-    print(prfx + "|| QUOTA BLOCK")
+    print(prfx + f"|| QUOTA BLOCK it set to: {start_date} | {end_date} | {blocknumber}")
+    #Embed#
+    embed = discord.Embed(title="Bot Startup Info • MainBot", color=discord.Color.green())
+    embed.add_field(name="Bot Name", value=bot.user.name, inline=True)
+    embed.add_field(name="Bot ID", value=bot.user.id, inline=True)
+    embed.add_field(name="Runtime Information", value=f"Discord Version: {discord.__version__} || Python Version: {platform.python_version()}", inline=False)
+    embed.add_field(name="Synced Slash Commands", value=len(synced), inline=False)
+    embed.add_field(name="--------------------NOTES--------------------", value="", inline=False)
+    if start_date != None and end_date != None and blocknumber != None:
+        embed.add_field(name="", value=f"Quota set: S:{start_date} | E:{end_date} | B:{blocknumber}")
+        quota = True
+        notes = True
+    if quota != True:
+        embed.add_field(name="", value="Quota not set, please check the databse.")
+    if notes != True:
+        embed.add_field(name="", value="N/A")
+    channel = bot.get_channel(1069974021246046310)  # Replace channel_id with the ID of the channel you want to send the message to
+    await channel.send(embed=embed)
 
 @bot.event
 async def on_reaction_add(reaction, user):
@@ -56,12 +78,12 @@ async def on_reaction_add(reaction, user):
         if(last_user_count < page * 10):
             return
         rows = get_users(page+1)
-        if end_date == "" or start_date == "" or blocknumber == "N/A":
-            embed = discord.Embed(title =f"**Point Overview - Block {blocknumber}**", description=f"-----------------------------------------------\nCurrent quota block has not yet been set-up. \nPlease ping a member of DSBPC+.\n-----------------------------------------------", color=UserCommandsCOL)
+        if end_date == "" or start_date == "" or blocknumber == "":
+            embed = discord.Embed(title =f"**Point Overview - Block {blocknumber}**", description=f"-----------------------------------------------\nCurrent quota block has not yet been set up. \nPlease ping a member of DSBPC+.\n-----------------------------------------------", color=UserCommandsCOL)
         else:
             embed = discord.Embed(title =f"**Point Overview - Block {blocknumber}**", description=f"----------------------------------------------------------\nCurrent quota block ending <t:{end_date}:R>.\n| <t:{start_date}> - <t:{end_date}> |\n----------------------------------------------------------", color=UserCommandsCOL)
         for row in rows:
-            if(row[1] != None and row[2] != None):
+            if(row[1] != None and row[2] != None and row[2] >= 1): # added check for points >= 1
                 user = bot.get_user(int(row[1]))
                 user = "#" + str(last_user_count) + " | " + str(user.display_name)
                 embed.add_field(name = user, value = '{:,}'.format(row[2]), inline=False)
@@ -79,8 +101,8 @@ async def on_reaction_add(reaction, user):
         if(page == 1):
             return
         rows = get_users(page-1)
-        if end_date == "" or start_date == "" or blocknumber == "N/A":
-            embed = discord.Embed(title =f"**Point Overview - Block {blocknumber}**", description=f"-----------------------------------------------\nCurrent quota block has not yet been set-up. \nPlease ping a member of DSBPC+.\n-----------------------------------------------", color=UserCommandsCOL)
+        if end_date == "" or start_date == "" or blocknumber == "":
+            embed = discord.Embed(title =f"**Point Overview - Block {blocknumber}**", description=f"-----------------------------------------------\nCurrent quota block has not yet been set up. \nPlease ping a member of DSBPC+.\n-----------------------------------------------", color=UserCommandsCOL)
         else:
             embed = discord.Embed(title =f"**Point Overview - Block {blocknumber}**", description=f"----------------------------------------------------------\nCurrent quota block ending <t:{end_date}:R>.\n| <t:{start_date}> - <t:{end_date}> |\n----------------------------------------------------------", color=UserCommandsCOL)
         if(last_user_count <= page * 10):
@@ -90,7 +112,7 @@ async def on_reaction_add(reaction, user):
         
         
         for row in rows:
-            if(row[1] != None and row[2] != None):
+            if(row[1] != None and row[2] != None and row[2] >= 1): # added check for points >= 1
                 user = bot.get_user(int(row[1]))
                 user = "#" + str(last_user_count) + " | " + str(user.display_name)
                 embed.add_field(name = user, value = '{:,}'.format(row[2]), inline=False)
@@ -173,7 +195,15 @@ async def shutdown(interaction:discord.Interaction):
     else:
         embed = discord.Embed(color=ErrorCOL, description="You are not permitted to use this command.")
         await interaction.response.send_message(embed=embed)
-        
+
+@bot.tree.command(name="chst", description=":lo:")
+async def change_status(interaction: discord.Interaction):
+    members = bot.guilds[0].members
+    random_member = random.choice(members)
+    activity = discord.Activity(type=discord.ActivityType.watching, name=f"{random_member.display_name}")
+    await bot.change_presence(activity=activity)
+    await interaction.response.send_message("Status updated", ephemeral=True)
+    
 ## POINTS GROUP ##
 class PointsGrp(app_commands.Group):
     pass
@@ -225,7 +255,7 @@ async def remove(interaction:discord.Interaction,username:discord.Member,point:i
 async def view(interaction: discord.Interaction, user:discord.Member):
     points = get_user_points(user.id)
     if points:
-        if int(points) <= 1:
+        if points == 1:
             embed = discord.Embed(color=UserCommandsCOL, description=f"{user.mention} has {points} point.")
         elif points:
             embed = discord.Embed(color=UserCommandsCOL, description=f"{user.mention} has {points} points.")
@@ -233,20 +263,17 @@ async def view(interaction: discord.Interaction, user:discord.Member):
         embed = discord.Embed(color=UserCommandsCOL, description=f"{user.mention} has no points.")
     await interaction.response.send_message(embed=embed)
     
-@pointsgroup.command(name="overview",description="Shows a leaderboard for everyones points.")
+@pointsgroup.command(name="overview",description="Shows leaderboard for points.")
 async def overview(interaction: discord.Interaction):
     gettingembed = discord.Embed(description="Getting data...")
     await interaction.response.send_message(embed=gettingembed)
     rows = get_users(1)
-    if end_date == "" or start_date == "" or blocknumber == "N/A":
-        embed = discord.Embed(title =f"**Point Overview - Block {blocknumber}**", description=f"-----------------------------------------------\nCurrent quota block has not yet been set-up. \nPlease ping a member of DSBPC+.\n-----------------------------------------------", color=UserCommandsCOL)
-    else:
-        embed = discord.Embed(title =f"**Point Overview - Block {blocknumber}**", description=f"----------------------------------------------------------\nCurrent quota block ending <t:{end_date}:R>.\n| <t:{start_date}> - <t:{end_date}> |\n----------------------------------------------------------", color=UserCommandsCOL)
+    embed = discord.Embed(title =f"**Point Overview - Block {blocknumber}**", description=f"----------------------------------------------------------\nCurrent quota block ending <t:{end_date}:R>.\n| <t:{start_date}> - <t:{end_date}> |\n----------------------------------------------------------", color=UserCommandsCOL)
     count = 1
     for row in rows:
-        if(row[1] != None and row[2] != None):
+        if(row[1] != None and row[2] != None and row[2] >= 1): # added check for points >= 1
             user = bot.get_user(int(row[1]))
-            user = "#" + str(count) + " | " + str(user.display_name)
+            user = "#" + str(count) + " | " + str(user.mention)
             embed.add_field(name = user, value = '{:,}'.format(row[2]), inline=False)
             count += 1
     msg_sent = await interaction.edit_original_response(embed=embed)

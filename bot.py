@@ -76,7 +76,7 @@ async def on_ready():
 @bot.event
 async def on_reaction_add(reaction, user):
     if(reaction.emoji == u"\u25B6") and user.id != bot.user.id:
-        page, last_user_count = get_leaderboard_page(user.id, reaction.message.id)
+        page, last_user_count = get_leaderboard_page(reaction.message.id)
         if(last_user_count < page * 10):
             return
         rows = get_users(page+1)
@@ -107,7 +107,7 @@ async def on_reaction_add(reaction, user):
             await reaction.message.add_reaction(u"\u25B6")
     
     if(reaction.emoji == u"\u25C0") and user.id != bot.user.id:
-        page, last_user_count = get_leaderboard_page(user.id, reaction.message.id)
+        page, last_user_count = get_leaderboard_page(reaction.message.id)
         if(page == 1):
             return
         rows = get_users(page-1)
@@ -170,6 +170,13 @@ def allmrs(user):
         if role.name in ["Elite Defense Specialist", "Master Sergeant", "[DSB] Squadron Officer", "DSB Pre-Command", "QSO Pre-Command", "QSO Command", "DSB Command"] or role.permissions.administrator:
             return True
     return False
+
+def DSBMember(user):
+    roles = user.roles
+    for role in roles:
+        if role.name in ["DSB"] or role.permissions.administrator:
+            return True
+    return False
         
 async def format_user(user_name):
     for i in range(len(user_name)):
@@ -198,7 +205,7 @@ async def restart(interaction:discord.Interaction):
         print(f"------------------------------------\nBOT RESTARTED BY {user}\n------------------------------------")
         os.execv(sys.executable, ['python'] + sys.argv)
     else:
-        embed = discord.Embed(color=ErrorCOL, description="You are not permitted to use this command.")
+        embed = discord.Embed(color=ErrorCOL, description="You are not permitted to run this command.")
         await interaction.response.send_message(embed=embed)
         
 @bot.tree.command(name="shutdown", description="Shuts down DSB Helper [DSBCOMM+]")
@@ -210,7 +217,7 @@ async def shutdown(interaction:discord.Interaction):
         print(f"------------------------------------\nBOT CLOSED BY {user}\n------------------------------------")
         await bot.close()
     else:
-        embed = discord.Embed(color=ErrorCOL, description="You are not permitted to use this command.")
+        embed = discord.Embed(color=ErrorCOL, description="You are not permitted to run this command.")
         await interaction.response.send_message(embed=embed)
 
 @bot.tree.command(name="watching", description=":lo:")
@@ -245,118 +252,140 @@ bot.tree.add_command(pointsgroup)
 @pointsgroup.command(name="add", description="Adds points to a user. [DSBPC+]")
 async def add(interaction:discord.Interaction, username:discord.Member, point:int):
     user = interaction.user
-    if(not authorizationz(user)): # check if user has permission
-        embed = discord.Embed(color=ErrorCOL, description=f"You do not have permission to add points.")
-        await interaction.response.send_message(embed=embed)
-        return
-    if(type(point)==int):
-        username_id = username.id
-        add_points(username_id, point) # add points to the user
+    if DSBMember(user):
+        if(not authorizationz(user)): # check if user has permission
+            embed = discord.Embed(color=ErrorCOL, description=f"You do not have permission to add points.")
+            await interaction.response.send_message(embed=embed)
+            return
+        if(type(point)==int):
+            username_id = username.id
+            add_points(username_id, point) # add points to the user
 
-        if int(point) <= 1: # check if the point is singular or plural
-            embed = discord.Embed(color=HRCommandsCOL, description=f"Added {point} point to {username.mention}")
+            if int(point) <= 1:
+                embed = discord.Embed(color=HRCommandsCOL, description=f"Added {point} point to {username.mention}")
+            else:
+                embed = discord.Embed(color=HRCommandsCOL, description=f"Added {point} points to {username.mention}")
+            await interaction.response.send_message(embed=embed)
         else:
-            embed = discord.Embed(color=HRCommandsCOL, description=f"Added {point} points to {username.mention}")
-        await interaction.response.send_message(embed=embed) # respond with the result
+            embed = discord.Embed(color=ErrorCOL, description=f"Invalid point number.")
+            await interaction.response.send_message(embed=embed)
     else:
-        embed = discord.Embed(color=ErrorCOL, description=f"Invalid point number.")
-        await interaction.response.send_message(embed=embed) # respond with the result     
+        notDSB = discord.Embed(color=ErrorCOL, description=f"You are not a member of DSB")
+        await interaction.response.send_message(embed=notDSB, ephemeral=True)    
     
 @pointsgroup.command(name="remove", description="Removes points from a user. [DSBPC+]")
 async def remove(interaction:discord.Interaction,username:discord.Member,point:int):
     user = interaction.user
-    if(not authorizationz(user)): # Check if user has permission to remove points
-        #await request_points(ctx)
-        embed = discord.Embed(color=ErrorCOL, description=f"You do not have permission to remove points.")
-        await interaction.response.send_message(embed=embed)
-        return
-    if(type(point)==int):
-        username_id = username.id
-        remove_points(username_id, point) #removes points from user
-        if int(point) <= 1: #checks if points is singular or plural
-            embed = discord.Embed(color=HRCommandsCOL, description=f"Removed {point} point from {username.mention}")
+    if DSBMember(user):
+        if(not authorizationz(user)): # Check if user has permission to remove points
+            #await request_points(ctx)
+            embed = discord.Embed(color=ErrorCOL, description=f"You do not have permission to remove points.")
+            await interaction.response.send_message(embed=embed)
+            return
+        if(type(point)==int):
+            username_id = username.id
+            remove_points(username_id, point) #removes points from user
+            if int(point) <= 1: #checks if points is singular or plural
+                embed = discord.Embed(color=HRCommandsCOL, description=f"Removed {point} point from {username.mention}")
+            else:
+                embed = discord.Embed(color=HRCommandsCOL, description=f"Removed {point} points from {username.mention}")
+            await interaction.response.send_message(embed=embed)
         else:
-            embed = discord.Embed(color=HRCommandsCOL, description=f"Removed {point} points from {username.mention}")
-        await interaction.response.send_message(embed=embed)
+            embed = discord.Embed(color=ErrorCOL, description=f"Invalid point number.")
+            await interaction.response.send_message(embed=embed)
     else:
-        embed = discord.Embed(color=ErrorCOL, description=f"Invalid point number.")
-        await interaction.response.send_message(embed=embed)
+        notDSB = discord.Embed(color=ErrorCOL, description=f"You are not a member of DSB.")
+        await interaction.response.send_message(embed=notDSB, ephemeral=True)
         
 @pointsgroup.command(name="view",description="View someone else's current point count.")
 async def view(interaction: discord.Interaction, user:discord.Member):
-    points = get_user_points(user.id)
-    if points:
+    if DSBMember(interaction.user):
+        points = get_user_points(user.id)
         if points == 1:
             embed = discord.Embed(color=UserCommandsCOL, description=f"{user.mention} has {points} point.")
         elif points:
             embed = discord.Embed(color=UserCommandsCOL, description=f"{user.mention} has {points} points.")
+        else:
+            embed = discord.Embed(color=UserCommandsCOL, description=f"{user.mention} has no points.")
+        await interaction.response.send_message(embed=embed)
     else:
-        embed = discord.Embed(color=UserCommandsCOL, description=f"{user.mention} has no points.")
-    await interaction.response.send_message(embed=embed)
+        notDSB = discord.Embed(color=ErrorCOL, description=f"You are not a member of DSB.")
+        await interaction.response.send_message(embed=notDSB, ephemeral=True)
     
 @pointsgroup.command(name="overview",description="Shows leaderboard for points.")
 async def overview(interaction: discord.Interaction):
-    gettingembed = discord.Embed(description="Getting data...")
-    await interaction.response.send_message(embed=gettingembed)
-    rows = get_users(1)
-    embed = discord.Embed(title =f"**Point Overview - Block {blocknumber}**", description=f"----------------------------------------------------------\nCurrent quota block ending <t:{end_date}:R>.\n| <t:{start_date}> - <t:{end_date}> |\n----------------------------------------------------------", color=UserCommandsCOL)
-    count = 1
-    for row in rows:
-        if(row[1] != None and row[2] != None and row[2] >= 1): # added check for points >= 1
-            user = bot.get_user(int(row[1]))
-            if user:
-                member = bot.get_guild(DSBSeverID).get_member(user.id)
-                if member:
-                    nickname = member.nick or user.name
+    if DSBMember(interaction.user):
+        gettingembed = discord.Embed(description="Getting data...")
+        await interaction.response.send_message(embed=gettingembed)
+        rows = get_users(1)
+        embed = discord.Embed(title =f"**Point Overview - Block {blocknumber}**", description=f"----------------------------------------------------------\nCurrent quota block ending <t:{end_date}:R>.\n| <t:{start_date}> - <t:{end_date}> |\n----------------------------------------------------------", color=UserCommandsCOL)
+        count = 1
+        for row in rows:
+            if(row[1] != None and row[2] != None and row[2] >= 1): # added check for points >= 1
+                user = bot.get_user(int(row[1]))
+                if user:
+                    member = bot.get_guild(SupportServerID).get_member(user.id)
+                    if member:
+                        nickname = member.nick or user.name
+                    else:
+                        nickname = user.name
                 else:
-                    nickname = user.name
-            else:
-                nickname = "User not found"
-            user = "#" + str(count) + " | " + str(nickname)
-            embed.add_field(name = user, value = '{:,}'.format(row[2]), inline=False)
-            count += 1
-    msg_sent = await interaction.edit_original_response(embed=embed)
-    add_leaderboard(interaction.user.id, msg_sent.id, count)
-    if(count >= 11):
-        await msg_sent.add_reaction(u"\u25B6")
+                    nickname = "User not found"
+                user = "#" + str(count) + " | " + str(nickname)
+                embed.add_field(name = user, value = '{:,}'.format(row[2]), inline=False)
+                count += 1
+        msg_sent = await interaction.edit_original_response(embed=embed)
+        add_leaderboard(interaction.user.id, msg_sent.id, count)
+        if(count >= 11):
+            await msg_sent.add_reaction(u"\u25B6")
+    else:
+        notDSB = discord.Embed(color=ErrorCOL, description=f"You are not a member of DSB.")
+        await interaction.response.send_message(embed=notDSB, ephemeral=True)
 
 @pointsgroup.command(name="reset",description="Resets the points of all users to zero. [DSBPC+]")
 async def reset(interaction:discord.Interaction):
     user = interaction.user
-    if authorizationz(user):
-        # Send a message asking the user to confirm the reset
-        embed = discord.Embed(color=HRCommandsCOL, description=f"Are you sure you want to reset the points? Respond with 'yes' to confirm.")
-        await interaction.response.send_message(embed=embed)
-        
-        # Wait for the user's response
-        def check(m):
-            return m.content == 'yes' and m.channel == interaction.channel and m.author == interaction.user
-        try:
-            response = await bot.wait_for('message', check=check, timeout=10)
-        except asyncio.TimeoutError:
-            embed = discord.Embed(color=ErrorCOL, description=f"Timed out waiting for response.")
-            await response.reply(embed=embed)
+    if DSBMember(user):
+        if authorizationz(user):
+            # Send a message asking the user to confirm the reset
+            embed = discord.Embed(color=HRCommandsCOL, description=f"Are you sure you want to reset the points? Respond with 'yes' to confirm.")
+            await interaction.response.send_message(embed=embed)
+            
+            # Wait for the user's response
+            def check(m):
+                return m.content == 'yes' and m.channel == interaction.channel and m.author == interaction.user
+            try:
+                response = await bot.wait_for('message', check=check, timeout=10)
+            except asyncio.TimeoutError:
+                embed = discord.Embed(color=ErrorCOL, description=f"Timed out waiting for response.")
+                await response.reply(embed=embed)
+            else:
+                if response.content == 'yes':
+                    if authorizationz(response.author):
+                        await reset_database()
+                        embed = discord.Embed(color=HRCommandsCOL, description=f"Point reset successful.")
+                        await response.reply(embed=embed)
         else:
-            if response.content == 'yes':
-                if authorizationz(response.author):
-                    await reset_database()
-                    embed = discord.Embed(color=HRCommandsCOL, description=f"Point reset successful.")
-                    await response.reply(embed=embed)
+            embed = discord.Embed(color=ErrorCOL, description=f"You do not have permission to use this command.")
+            await interaction.response.send_message(embed=embed)
     else:
-        embed = discord.Embed(color=ErrorCOL, description=f"You do not have permission to use this command.")
-        await interaction.response.send_message(embed=embed)
+        notDSB = discord.Embed(color=ErrorCOL, description=f"You are not a member of DSB.")
+        await interaction.response.send_message(embed=notDSB, ephemeral=True)
 
 @bot.tree.command(name="mypoints",description="View your point count.")
 async def mypoints(interaction: discord.Interaction):
-    points = get_user_point(interaction.user.id)
-    if points:
-        if points == 1:
+    if DSBMember(interaction.user):
+        points = get_user_point(interaction.user.id)
+        if int(points) <= 1:
             embed = discord.Embed(color=UserCommandsCOL, description=f"You have {points} point.")
         elif points:
             embed = discord.Embed(color=UserCommandsCOL, description=f"You have {points} points!",)
+        else:
+            embed = discord.Embed(color=UserCommandsCOL, description=f"You have no points.")
+        await interaction.response.send_message(embed=embed)
     else:
-        embed = discord.Embed(color=UserCommandsCOL, description=f"You have no points.")
-    await interaction.response.send_message(embed=embed)
+        notDSB = discord.Embed(color=ErrorCOL, description=f"You are not a member of DSB.")
+        await interaction.response.send_message(embed=notDSB, ephemeral=True)
 
 class InfoboardOptions(discord.ui.Select):
     def __init__(self):
@@ -446,46 +475,53 @@ async def ping(interaction: discord.Interaction):
 @bot.tree.command(name="updatequota",description="Updates the quota block start to end date. [DSBPC+]")
 async def updatequota(interaction:discord.Interaction, start_date_new: int, end_date_new: int, blocknumber_new: int):
     user = interaction.user
-    
-    if authorizationz(user):
-        update_quota(start_date_new, end_date_new, blocknumber_new)
-        embed = discord.Embed(color=HRCommandsCOL, title="Quota block change")
-        embed.add_field(name="From:", value=f"<t:{start_date}> - <t:{end_date}> || Block {blocknumber}", inline=False)
-        embed.add_field(name="To:", value=f"<t:{start_date_new}> - <t:{end_date_new}> || Block {blocknumber_new}", inline=False)
-        await interaction.response.send_message(embed=embed)
-        quota_get()
+    if DSBMember(user):
+        if authorizationz(user):
+            update_quota(start_date_new, end_date_new, blocknumber_new)
+            embed = discord.Embed(color=HRCommandsCOL, title="Quota block change")
+            embed.add_field(name="From:", value=f"<t:{start_date}> - <t:{end_date}> || Block {blocknumber}", inline=False)
+            embed.add_field(name="To:", value=f"<t:{start_date_new}> - <t:{end_date_new}> || Block {blocknumber_new}", inline=False)
+            await interaction.response.send_message(embed=embed)
+            quota_get()
+        else:
+            embed = discord.Embed(color=ErrorCOL, description=f"You do not have permission to run this command.")
+            await interaction.response.send_message(embed=embed)
     else:
-        embed = discord.Embed(color=ErrorCOL, description=f"You do not have permission to run this command.")
-        await interaction.response.send_message(embed=embed)
+        notDSB = discord.Embed(color=ErrorCOL, description=f"You are not a member of DSB.")
+        await interaction.response.send_message(embed=notDSB, ephemeral=True)
 
-@bot.tree.command(name="soup",description="Adds or removes the Op. Supervisor Role. [EDS+]")
+@bot.tree.command(name="soup",description="Gives/revokes the Op. Supervisor Role. [EDS+]")
 async def soup(interaction:discord.Interaction):
     user = interaction.user
-    role_name = "[DSB] Operation Supervisors"
-    role = discord.utils.get(interaction.guild.roles, name=role_name)
-    
-    if mrs(user)==False:
-        embed = discord.Embed(color=UserCommandsCOL, description=f"You need to be EDS+ to use this command.")
-        await interaction.response.send_message(embed=embed)
-    else:
-        if role in interaction.user.roles:
-            try:
-                await interaction.user.remove_roles(role)
-                embed = discord.Embed(color=UserCommandsCOL, description=f"Role successfully removed.")
-                await interaction.response.send_message(embed=embed)
-            except Exception as e:
-                print(e)
-                embed = discord.Embed(color=ErrorCOL, description=f"An error occurred while trying to remove the role.")
-                await interaction.response.send_message(embed=embed)
+    if DSBMember(user):
+        role_name = "[DSB] Operation Supervisors"
+        role = discord.utils.get(interaction.guild.roles, name=role_name)
+        
+        if mrs(user)==False:
+            embed = discord.Embed(color=UserCommandsCOL, description=f"You need to be EDS+ to use this command.")
+            await interaction.response.send_message(embed=embed)
         else:
-            try:
-                await interaction.user.add_roles(role)
-                embed = discord.Embed(color=UserCommandsCOL, description=f"Role successfully added.")
-                await interaction.response.send_message(embed=embed)
-            except Exception as e:
-                print(e)
-                embed = discord.Embed(color=ErrorCOL, description=f"An error occurred while trying to add the role.")
-                await interaction.response.send_message(embed=embed)
+            if role in interaction.user.roles:
+                try:
+                    await interaction.user.remove_roles(role)
+                    embed = discord.Embed(color=UserCommandsCOL, description=f"Role successfully removed.")
+                    await interaction.response.send_message(embed=embed)
+                except Exception as e:
+                    print(e)
+                    embed = discord.Embed(color=ErrorCOL, description=f"An error occurred while trying to remove the role.")
+                    await interaction.response.send_message(embed=embed)
+            else:
+                try:
+                    await interaction.user.add_roles(role)
+                    embed = discord.Embed(color=UserCommandsCOL, description=f"Role successfully added.")
+                    await interaction.response.send_message(embed=embed)
+                except Exception as e:
+                    print(e)
+                    embed = discord.Embed(color=ErrorCOL, description=f"An error occurred while trying to add the role.")
+                    await interaction.response.send_message(embed=embed)
+    else:
+        notDSB = discord.Embed(color=ErrorCOL, description=f"You are not a member of DSB.")
+        await interaction.response.send_message(embed=notDSB, ephemeral=True)
 
 
 

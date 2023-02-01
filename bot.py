@@ -37,6 +37,8 @@ UserCommandsCOL = 0x0B0B45
 HRCommandsCOL = 0x000000
 ErrorCOL = 0xB3202C
 
+DSBSeverID = 949470602366976051
+SupportServerID = 953638901677973554
 
 @bot.event
 async def on_ready():
@@ -85,7 +87,15 @@ async def on_reaction_add(reaction, user):
         for row in rows:
             if(row[1] != None and row[2] != None and row[2] >= 1): # added check for points >= 1
                 user = bot.get_user(int(row[1]))
-                user = "#" + str(last_user_count) + " | " + str(user.display_name)
+                if user:
+                    member = bot.get_guild(DSBSeverID).get_member(user.id)
+                    if member:
+                        nickname = member.nick or user.name
+                    else:
+                        nickname = user.name
+                else:
+                    nickname = "User not found"
+                user = "#" + str(last_user_count) + " | " + str(nickname)
                 embed.add_field(name = user, value = '{:,}'.format(row[2]), inline=False)
                 last_user_count += 1
         
@@ -114,10 +124,17 @@ async def on_reaction_add(reaction, user):
         for row in rows:
             if(row[1] != None and row[2] != None and row[2] >= 1): # added check for points >= 1
                 user = bot.get_user(int(row[1]))
-                user = "#" + str(last_user_count) + " | " + str(user.display_name)
+                if user:
+                    member = bot.get_guild(DSBSeverID).get_member(user.id)
+                    if member:
+                        nickname = member.nick or user.name
+                    else:
+                        nickname = user.name
+                else:
+                    nickname = "User not found"
+                user = "#" + str(last_user_count) + " | " + str(nickname)
                 embed.add_field(name = user, value = '{:,}'.format(row[2]), inline=False)
                 last_user_count += 1
-        
         
         update_leaderboard(page - 1, last_user_count, reaction.message.id)
         await reaction.message.edit(embed = embed)
@@ -287,7 +304,15 @@ async def overview(interaction: discord.Interaction):
     for row in rows:
         if(row[1] != None and row[2] != None and row[2] >= 1): # added check for points >= 1
             user = bot.get_user(int(row[1]))
-            user = "#" + str(count) + " | " + str(user.name)
+            if user:
+                member = bot.get_guild(DSBSeverID).get_member(user.id)
+                if member:
+                    nickname = member.nick or user.name
+                else:
+                    nickname = user.name
+            else:
+                nickname = "User not found"
+            user = "#" + str(count) + " | " + str(nickname)
             embed.add_field(name = user, value = '{:,}'.format(row[2]), inline=False)
             count += 1
     msg_sent = await interaction.edit_original_response(embed=embed)

@@ -216,7 +216,7 @@ async def custom_message(interaction:discord.Interaction, channel:discord.TextCh
         await channel.send(f"{message}")
         await interaction.response.send_message("Done", ephemeral=True)
     else:
-        await interaction.response.send_message("You are not Blue...", ephemeral=True)
+        await interaction.response.send_message("You did something wrong...", ephemeral=True)
 
 ## POINTS GROUP ##
 class PointsGrp(app_commands.Group):

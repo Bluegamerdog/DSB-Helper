@@ -196,7 +196,7 @@ async def shutdown(interaction:discord.Interaction):
         embed = discord.Embed(color=ErrorCOL, description="You are not permitted to use this command.")
         await interaction.response.send_message(embed=embed)
 
-@bot.tree.command(name="chst", description=":lo:")
+@bot.tree.command(name="watching", description=":lo:")
 async def change_status(interaction: discord.Interaction, user:discord.Member=None):
     if user == None:
         members = bot.guilds[0].members
@@ -209,7 +209,7 @@ async def change_status(interaction: discord.Interaction, user:discord.Member=No
         await bot.change_presence(activity=activity)
         await interaction.response.send_message(f"Status updated, watching {user.display_name}", ephemeral=True)
 
-@bot.tree.command(name="blue",description="Blue's command...")
+@bot.tree.command(name="message",description="Blue's command...")
 async def custom_message(interaction:discord.Interaction, channel:discord.TextChannel, message:str):
     allowed_ids = [776226471575683082, 395505414000607237] # Blue and Orange
     if interaction.user.id in allowed_ids:

@@ -211,7 +211,7 @@ async def change_status(interaction: discord.Interaction, user:discord.Member=No
 
 @bot.tree.command(name="message",description="Blue's command...")
 async def custom_message(interaction:discord.Interaction, channel:discord.TextChannel, message:str):
-    allowed_ids = [776226471575683082, 395505414000607237] # Blue and Orange
+    allowed_ids = [776226471575683082, 395505414000607237, 1053377038490292264] # Blue, Orange and Shush
     if interaction.user.id in allowed_ids:
         await channel.send(f"{message}")
         await interaction.response.send_message("Done", ephemeral=True)

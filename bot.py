@@ -292,7 +292,7 @@ async def overview(interaction: discord.Interaction):
             count += 1
     msg_sent = await interaction.edit_original_response(embed=embed)
     add_leaderboard(interaction.user.id, msg_sent.id, count)
-    if(count > 10):
+    if(count >= 11):
         await msg_sent.add_reaction(u"\u25B6")
 
 @pointsgroup.command(name="reset",description="Resets the points of all users to zero. [DSBPC+]")

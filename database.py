@@ -76,10 +76,10 @@ def get_user_point(username_id):
     else:
         return data[0][2]
     
-def get_leaderboard_page(user_id, message_id):
+def get_leaderboard_page(message_id):
     conn, cur = get_conn()
-    t = (user_id, message_id, )
-    cur.execute("SELECT * FROM board_tables WHERE username = ? AND message_id = ?",t)
+    t = (message_id, )
+    cur.execute("SELECT * FROM board_tables WHERE message_id = ?",t)
     data = cur.fetchall()
     return data[0][4], data[0][5]
     

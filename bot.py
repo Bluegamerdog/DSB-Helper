@@ -323,7 +323,7 @@ async def register_new(interaction:discord.Interaction, roblox_profile_link:str,
             if db_register_new(str(interaction.user), interaction.user.id, roblox_profile_link):
                 embed = discord.Embed(title="<:dsbbotSuccess:953641647802056756> Successfully registered!",description=f"`Username:` {interaction.user}\n`User ID:` {interaction.user.id}\n`Roblox Profile:` {roblox_profile_link}", color=discord.Color.green())
             else:
-                embed = discord.Embed(title="<:dsbbotFailed:953641818057216050> Failed to register!", description=f"You are already in the database.\n*If you wish to update your data, use `/database update`.*", color=discord.Color.red())
+                embed = discord.Embed(title="<:dsbbotFailed:953641818057216050> Failed to register!", description=f"You are already in the database.\n*If you wish to update your data, use `/db update`.*", color=discord.Color.red())
         
         await interaction.response.send_message(embed=embed)
     else:

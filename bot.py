@@ -159,7 +159,7 @@ async def on_reaction_add(reaction, user):
             await reaction.message.add_reaction(u"\u25B6")
     
     # Refresh
-    if(int(reaction.emoji.id) == 1071533380581208146) and user.id != bot.user.id:
+    if(reaction.emoji == 1071533380581208146) and user.id != bot.user.id:
         page, last_user_count = get_leaderboard_page(reaction.message.id)
         rows = get_users(page)
         embed = discord.Embed(title =f"**Point Overview - Block {blocknumber}**", description=f"----------------------------------------------------------\nCurrent quota block ending <t:{end_date}:R>.\n| <t:{start_date}> - <t:{end_date}> |\n----------------------------------------------------------", color=DSBCommandsCOL)
@@ -226,7 +226,7 @@ async def on_reaction_add(reaction, user):
         await reaction.message.add_reaction(u"\u25B6")
         
     
-    if str(reaction.emoji) == "<:Accepted:1032635798857723914>" and reaction.message.channel.id == 1006578820331081878 and DSBPC_A(reaction.user):
+    if str(reaction.emoji) == "<:Accepted:1032635798857723914>" and reaction.message.channel.id == 1006578820331081878 and DSBPC_A(user):
         role_name = "DSB Leave of Absence"
         role = discord.utils.get(reaction.message.guild.roles, name=role_name)
         await reaction.message.author.add_roles(role)

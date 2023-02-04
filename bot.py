@@ -159,7 +159,7 @@ async def on_reaction_add(reaction, user):
             await reaction.message.add_reaction(u"\u25B6")
     
     # Refresh
-    if(reaction.emoji.id == 1071533380581208146) and user.id != bot.user.id:
+    if(int(reaction.emoji.id) == 1071533380581208146) and user.id != bot.user.id:
         page, last_user_count = get_leaderboard_page(reaction.message.id)
         rows = get_users(page)
         embed = discord.Embed(title =f"**Point Overview - Block {blocknumber}**", description=f"----------------------------------------------------------\nCurrent quota block ending <t:{end_date}:R>.\n| <t:{start_date}> - <t:{end_date}> |\n----------------------------------------------------------", color=DSBCommandsCOL)
@@ -226,7 +226,7 @@ async def on_reaction_add(reaction, user):
         await reaction.message.add_reaction(u"\u25B6")
         
     
-    if str(reaction.emoji) == "<:dsbbotSuccess:953641647802056756>" and reaction.message.channel.id == 983194737882312714 and DSBPC_A(reaction.user):
+    if str(reaction.emoji) == "<:dsbbotSuccess:953641647802056756>" and reaction.message.channel.id == 1006578820331081878 and DSBPC_A(reaction.user):
         role_name = "DSB Leave of Absence"
         role = discord.utils.get(reaction.message.guild.roles, name=role_name)
         await reaction.message.author.add_roles(role)
@@ -600,8 +600,8 @@ class InfoboardOptions(discord.ui.Select):
         #await interaction.response.send_message(f'You chose {self.values[0]}.')
         if self.values[0] == "DHI":
             embed = discord.Embed(title="**DSB Helper Infoboard**", description="The DSB Helper mainly manages the points based quota system. Provided are infoboards with various commands and information related to the bot. See the dropdown menu below.", color=DSBCommandsCOL)
-            embed.add_field(name="Credits", value="- Main developer: Blue\n- Bot host: Orange\n- Frontend Design: Shush & Polish\nBot testing: the suffering + Polish")
-            embed.set_footer(text="DSB Helper 1.0")
+            embed.add_field(name="Credits", value="- Main developer: Blue\n- Bot host: Orange\n- Frontend Design: Shush & Polish\n- Bot testing: the suffering + Polish")
+            embed.set_footer(text="DSB Helper 1.3")
             embed.set_thumbnail(url="https://images-ext-1.discordapp.net/external/lnHKwZ40MRhYKuNJpNUS8NQiaekqkgfW9TaGj-B5Yg0/https/tr.rbxcdn.com/580b2e0cd698decfa585464b50a4278c/150/150/Image/Png")
         elif self.values[0] == "BC":
             embed = discord.Embed(title="**Basic Commands**", description="All servers members can use these commands. They are represented by the color white.", color=BasiccommandCOL)
@@ -635,8 +635,8 @@ class InfoboardView(discord.ui.View):
 @bot.tree.command(name="infoboard",description="Shows bot information and a list of commands.")
 async def infoboard(interaction: discord.Interaction):
     embed = discord.Embed(title="**DSB Helper Infoboard**", description="The DSB Helper mainly manages the points based quota system. Provided are infoboards with various commands and information related to the bot. See the dropdown menu below.", color=DSBCommandsCOL)
-    embed.add_field(name="Credits", value="Bluegamerdog - Backend API\nOrangePurgatory - Temporary bot host\nObviously_Shush - Frontend & Misc\nThe suffering - Bug testing")
-    embed.set_footer(text="DSB Helper 1.0")
+    embed.add_field(name="Credits", value="- Main developer: Blue\n- Bot host: Orange\n- Frontend Design: Shush & Polish\n- Bot testing: the suffering + Polish")
+    embed.set_footer(text="DSB Helper 1.3")
     embed.set_thumbnail(url="https://images-ext-1.discordapp.net/external/lnHKwZ40MRhYKuNJpNUS8NQiaekqkgfW9TaGj-B5Yg0/https/tr.rbxcdn.com/580b2e0cd698decfa585464b50a4278c/150/150/Image/Png")
     await interaction.response.send_message(embed=embed, view=InfoboardView())
     

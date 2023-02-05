@@ -159,7 +159,7 @@ async def on_reaction_add(reaction, user):
             await reaction.message.add_reaction(u"\u25B6")
     
     # Refresh
-    if(reaction.emoji == 1071533380581208146) and user.id != bot.user.id:
+    if(str(reaction.emoji) == '<:dsbbotRefresh:1071533380581208146>') and user.id != bot.user.id:
         page, last_user_count = get_leaderboard_page(reaction.message.id)
         rows = get_users(page)
         embed = discord.Embed(title =f"**Point Overview - Block {blocknumber}**", description=f"----------------------------------------------------------\nCurrent quota block ending <t:{end_date}:R>.\n| <t:{start_date}> - <t:{end_date}> |\n----------------------------------------------------------", color=DSBCommandsCOL)
@@ -185,9 +185,10 @@ async def on_reaction_add(reaction, user):
         await reaction.message.clear_reactions()
         if(page > 1):
             await reaction.message.add_reaction(u"\u25C0")
+            await reaction.message.add_reaction("<:dsbbotRefresh:1071533380581208146>")
         if(last_user_count > (page) * 10):
+            await reaction.message.add_reaction("<:dsbbotRefresh:1071533380581208146>")
             await reaction.message.add_reaction(u"\u25B6")
-        await reaction.message.add_reaction("<:dsbbotRefresh:1071533380581208146>")
         
     # Prev
     if(reaction.emoji == u"\u25C0") and user.id != bot.user.id:

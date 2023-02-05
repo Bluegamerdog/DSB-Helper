@@ -2,7 +2,7 @@ import sqlite3
 from datetime import datetime
 
 def get_conn():
-    conn = sqlite3.connect('dddatabase.db')
+    conn = sqlite3.connect('ddatabase.db')
     cur = conn.cursor()
     return conn, cur
 

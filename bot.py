@@ -195,9 +195,7 @@ async def on_reaction_add(reaction, user):
                     embed.add_field(name = user, value = '{:,}'.format(int(row[3])) + " point", inline=False)
                 else:
                     embed.add_field(name = user, value = '{:,}'.format(int(row[3])) + " points", inline=False)
-                last_user_count += 1
-        if not has_points:
-            embed.add_field(name="", value="***No point data over `0` found in `rows`.***")       
+                last_user_count += 1       
         update_leaderboard(page + 1, last_user_count, reaction.message.id)
         await reaction.message.edit(embed = embed)
         await reaction.message.clear_reactions()
@@ -232,8 +230,9 @@ async def on_reaction_add(reaction, user):
                 else:
                     embed.add_field(name = user, value = '{:,}'.format(int(row[3])) + " points", inline=False)
                 last_user_count += 1
-        if not has_points:
-            embed.add_field(name="", value="***No point data over `0` found in `rows`.***")
+        if not has_points and last_user_count == 1:
+            embed.add_field(name="", value="")
+            embed.add_field(name="", value="*<:dsbbotCaution:1067970676041982053> No point data found, it seems no one currently has any points.*")
         
         update_leaderboard(page, last_user_count, reaction.message.id)
         await reaction.message.edit(embed = embed)
@@ -259,10 +258,8 @@ async def on_reaction_add(reaction, user):
         else:
             last_user_count -= 20
         
-        has_points = False
         for row in rows:
             if(row[1] != None and int(row[3]) >= 1): # added check for points >= 1
-                has_points = True
                 user = bot.get_user(int(row[1]))
                 if user:
                     member = bot.get_guild(DSBSeverID).get_member(user.id)
@@ -275,8 +272,6 @@ async def on_reaction_add(reaction, user):
                 user = "#" + str(last_user_count) + " | " + str(nickname)
                 embed.add_field(name = user, value = '{:,}'.format(int(row[3])), inline=False)
                 last_user_count += 1
-        if not has_points:
-            embed.add_field(name="", value="***No point data over `0` found in `rows`.***")
         update_leaderboard(page - 1, last_user_count, reaction.message.id)
         await reaction.message.edit(embed = embed)
         await reaction.message.clear_reactions()
@@ -678,7 +673,7 @@ async def overview(interaction: discord.Interaction):
                 else:
                     embed.add_field(name = user, value = '{:,}'.format(int(row[3])) + " points", inline=False)
                 count += 1
-        if not has_points:
+        if not has_points and count == 1:
             embed.add_field(name="", value="")
             embed.add_field(name="", value="*<:dsbbotCaution:1067970676041982053> No point data found, it seems no one currently has any points.*")
         msg_sent = await interaction.edit_original_response(embed=embed)

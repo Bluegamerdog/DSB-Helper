@@ -177,7 +177,7 @@ async def on_reaction_add(reaction, user):
         if(last_user_count < page * 10):
             return
         rows = get_users_amount(page+1)
-        embed = discord.Embed(title =f"**Point Overview - Block {blocknumber}**", description=f"----------------------------------------------------------\nCurrent quota block ending <t:{end_date}:R>.\n| <t:{start_date}> - <t:{end_date}> |\n----------------------------------------------------------", color=DSBCommandsCOL)
+        embed = discord.Embed(title =f"**Point Overview - Block {blocknumber}**", description=f"----------------------------------------------------------\nCurrent quota block ending <t:{end_date}:R>.\n<t:{start_date}> - <t:{end_date}>\n----------------------------------------------------------", color=DSBCommandsCOL)
         has_points = False
         for row in rows:
             if(row[1] != None and int(row[3]) >= 1): # added check for points 
@@ -191,10 +191,7 @@ async def on_reaction_add(reaction, user):
                 else:
                     nickname = "User not found"
                 user = "#" + str(last_user_count) + " | " + str(nickname)
-                if int(row[3]) == 1:
-                    embed.add_field(name = user, value = '{:,}'.format(int(row[3])) + " point", inline=False)
-                else:
-                    embed.add_field(name = user, value = '{:,}'.format(int(row[3])) + " points", inline=False)
+                embed.add_field(name = user, value = '{:,}'.format(int(row[3])), inline=False)
                 last_user_count += 1       
         update_leaderboard(page + 1, last_user_count, reaction.message.id)
         await reaction.message.edit(embed = embed)
@@ -225,10 +222,7 @@ async def on_reaction_add(reaction, user):
                 else:
                     nickname = "User not found"
                 user = "#" + str(last_user_count) + " | " + str(nickname)
-                if int(row[3]) == 1:
-                    embed.add_field(name = user, value = '{:,}'.format(int(row[3])) + " point", inline=False)
-                else:
-                    embed.add_field(name = user, value = '{:,}'.format(int(row[3])) + " points", inline=False)
+                embed.add_field(name = user, value = '{:,}'.format(int(row[3])), inline=False)
                 last_user_count += 1
         if not has_points and last_user_count == 1:
             embed.add_field(name="", value="")
@@ -652,7 +646,7 @@ async def overview(interaction: discord.Interaction):
         gettingembed = discord.Embed(description="Getting data...")
         await interaction.response.send_message(embed=gettingembed)
         rows = get_users_amount(1)                                                                   
-        embed = discord.Embed(title =f"**Point Overview - Block {blocknumber}**", description=f"----------------------------------------------------------\nCurrent quota block ending <t:{end_date}:R>.\n| <t:{start_date}> - <t:{end_date}> |\n----------------------------------------------------------", color=DSBCommandsCOL)
+        embed = discord.Embed(title =f"**Point Overview - Block {blocknumber}**", description=f"----------------------------------------------------------\nCurrent quota block ending <t:{end_date}:R>.\n<t:{start_date}> - <t:{end_date}>\n----------------------------------------------------------", color=DSBCommandsCOL)
         count = 1
         has_points = False
         for row in rows:
@@ -668,10 +662,7 @@ async def overview(interaction: discord.Interaction):
                 else:
                     nickname = "User not found"
                 user = "#" + str(count) + " | " + str(nickname)
-                if int(row[3]) == 1:
-                    embed.add_field(name = user, value = '{:,}'.format(int(row[3])) + " point", inline=False)
-                else:
-                    embed.add_field(name = user, value = '{:,}'.format(int(row[3])) + " points", inline=False)
+                embed.add_field(name = user, value = '{:,}'.format(int(row[3])), inline=False)
                 count += 1
         if not has_points and count == 1:
             embed.add_field(name="", value="")
@@ -685,7 +676,7 @@ async def overview(interaction: discord.Interaction):
 @pointsgroup.command(name="reset",description="Resets the points of all users to zero. [DSBPC+]")
 async def reset(interaction:discord.Interaction):
     if not DSBPC_A(interaction.user):
-        return await interaction.response.send_message(embed=discord.Embed(title=f"<:dsbbotFailed:953641818057216050> Failed to reset points!", description="You must be a member of DSBCOMM or above to purge the registry database.", color=ErrorCOL))
+        return await interaction.response.send_message(embed=discord.Embed(title=f"<:dsbbotFailed:953641818057216050> Failed to reset points!", description="You must be a member of DSBCOMM or above to reset the points.", color=ErrorCOL))
     else:
         await interaction.response.send_message(embed=discord.Embed(description="<:dsbbotUnderReview:1067970676041982053> Waiting for response..."))
         embed = discord.Embed(color=HRCommandsCOL, description=f"<:dsbbotUnderReview:1067970676041982053> **Are you sure you want to reset the points?**\nReact with <:dsbbotApproved:953642750039953418> to confirm.", colour=ErrorCOL)
@@ -787,7 +778,7 @@ async def infoboard(interaction: discord.Interaction):
 @bot.tree.command(name="soup",description="Gives/revokes the Op. Supervisor Role. [EDS+]")
 async def soup(interaction:discord.Interaction):
     if not FMR_A(interaction.user):
-        return await interaction.response.send_message(embed = discord.Embed(color=ErrorCOL, title="<:dsbbotFailed:953641818057216050> Missing permissions!", description=f"You must be DSB Elite Defense Specializst+ to use this command."))
+        return await interaction.response.send_message(embed = discord.Embed(color=ErrorCOL, title="<:dsbbotFailed:953641818057216050> Missing permissions!", description=f"You must be DSB Elite Defense Specialist+ to use this command."))
     else:
         role_name = "[DSB] Operation Supervisors"
         role = discord.utils.get(interaction.guild.roles, name=role_name)

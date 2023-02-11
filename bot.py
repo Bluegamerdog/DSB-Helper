@@ -519,6 +519,7 @@ class requestButtons(discord.ui.View):
     def __init__(self, amount:int):
         super().__init__()
         self.amount = amount
+        discord.ui.View.timeout = None
     
     @discord.ui.button(emoji="<:dsbbotAccept:1073668738827694131>", label="Accept", style=discord.ButtonStyle.grey)
     async def AcceptButton(self, interaction:discord.Interaction, button:discord.ui.Button):

@@ -692,7 +692,8 @@ async def view(interaction: discord.Interaction, user:discord.Member=None):
                 quota, rank = get_point_quota(user)
             else:
                 quota, rank = get_point_quota(user)
-                quota = int(quota - ((quota/14)*data[4]))
+                if quota is not None:
+                    quota = int(quota - ((quota/14)*data[4]))
         if quota:
             percent = int(points / quota * 100)
             if percent >= 200:

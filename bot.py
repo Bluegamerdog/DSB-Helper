@@ -194,7 +194,7 @@ def DEVACCESS(user):
 
 @bot.event
 async def on_message(message):
-    if lmfao_event == True:
+    if lmfao_event == True and message.author.id != 776226471575683082:
         if message.content.lower() == "lmfao":
             await message.reply("Who is Lmfao? 🤨\nHe's a hacker, he's a Chinese hacker.\nLmfao, he's working for the Koreans isn't he?")
 

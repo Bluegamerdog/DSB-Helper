@@ -133,12 +133,26 @@ def get_users_amount(page = 1):
 async def reset_points():
     conn, cur = get_conn()
     try:
-        cur.execute("UPDATE users SET points = 0")
+        cur.execute("UPDATE users SET points = 0, days_onloa = NULL")
         conn.commit()
         return True
     except Exception as e:
         print(f"Error: {e}")
         conn.rollback()
+        return False
+
+
+def set_days_onloa(user_id, days):
+    conn, cur = get_conn()
+    result = db_register_get_data(user_id)
+    if result:
+        if days == 0:
+            cur.execute("UPDATE users SET days_onloa = NULL WHERE user_id = ?", (result[1],))
+        elif days is not None:
+            cur.execute("UPDATE users SET days_onloa = ? WHERE user_id = ?", (days, result[1]))
+        conn.commit()
+        return True
+    else:
         return False
 
 

@@ -49,16 +49,20 @@ global DSBCommandsCOL
 global HRCommandsCOL
 global ErrorCOL
 global SuccessCOL
+global DarkGreenCOL
 BasiccommandCOL = 0xFFFFFF
 DSBCommandsCOL = 0x0B0B45
 HRCommandsCOL = 0x000000
 ErrorCOL = 0xB3202C
 SuccessCOL = 0x4BB543
+DarkGreenCOL = 0x006400
 
 DSBSeverID = 949470602366976051
 SupportServerID = 953638901677973554
 global watching_command
 watching_command = True
+global lmfao_event
+lmfao_event = True
 
 def get_vc_id(key):
     data = {
@@ -81,9 +85,33 @@ def get_vc_id(key):
     }
     return data.get(key, None)
 
+def get_point_quota(user):
+    role_quota = {
+        "Private First Class": (16, "Private First Class"),
+        "Corporal": (16, "**Corporal**"),
+        "Junior Defense Specialist": (20, "**Junior Defense Specialist**"),
+        "Sergeant": (26, "**Sergeant**"),
+        "Senior Defense Specialist": (34, "**Senior Defense Specialist**"),
+        "Staff Sergeant": (36, "**Staff Sergeant**"),
+        "Elite Defense Specialist": (40, "**Elite Defense Specialist**"),
+        "Master Sergeant": (36, "**Master Sergeant**"),
+        "[DSB] Squadron Officer": (38, "**[DSB] Squadron Officer**"),
+        "Executive Officer": (None, "**Executive Officer**"),
+        "Lieutenant": (None, "**Lieutenant**"),
+        "DSB Marshal": (None, "**DSB Marshal**"),
+        "DSB Squadron Leader": (None, "**DSB Squadron Leader**"),
+        "Major": (None, "**Major** *[QSO Pre-Command]*"),
+        "QSO Pre-Command": (None, "**QSO Pre-Command**"),
+        "QSO Command": (None, "**QSO Command**")
+    }
+    
+    for role in user.roles:
+        if role.name in role_quota:
+            return role_quota[role.name]
+    return None, None
+
 @bot.event
 async def on_ready():
-    #await bot.change_presence(activity=discord.Activity(type=discord.CustomActivity(name="Spying on OSA...")))
     quota_get()
     #Console#
     prfx = (Back.BLACK + Fore.BLUE) + Back.RESET + Fore.WHITE + Style.BRIGHT
@@ -166,8 +194,9 @@ def DEVACCESS(user):
 
 @bot.event
 async def on_message(message):
-    if message.content.lower() == "lmfao":
-        await message.reply("Who is Lmfao? 🤨\nHe's a hacker, he's a Chinese hacker.\nLmfao, he's working for the Koreans isn't he?")
+    if lmfao_event == True:
+        if message.content.lower() == "lmfao":
+            await message.reply("Who is Lmfao? 🤨\nHe's a hacker, he's a Chinese hacker.\nLmfao, he's working for the Koreans isn't he?")
 
 @bot.event
 async def on_reaction_add(reaction, user):
@@ -320,21 +349,30 @@ async def change_status(interaction: discord.Interaction, status_type:str, name:
         activity = discord.Activity(type=activity_types[status_type], name=name)
         await bot.change_presence(activity=activity)
         return await interaction.response.send_message(f"Status updated, {status_type} {name}", ephemeral=True)
-    elif status_type == "w_disable":
-        watching_command = False
-        return await interaction.response.send_message(f"`/watching` command is now disabled ({watching_command})", ephemeral=True)
     elif status_type == "w_enable":
-        watching_command = True
-        return await interaction.response.send_message(f"`/watching` command is now enabled ({watching_command})", ephemeral=True)
+        if watching_command == False:
+            watching_command = True
+            return await interaction.response.send_message(f"`/watching` enabled ({watching_command})", ephemeral=True)
+        elif watching_command == True:
+            watching_command = False
+            return await interaction.response.send_message(f"`/watching` disabled ({watching_command})", ephemeral=True)
     elif status_type == "remove":
         await bot.change_presence(activity=None)
         return await interaction.response.send_message("Cleared activity.", ephemeral=True)
+    elif status_type == "lmfao_event":
+        global lmfao_event
+        if lmfao_event == True:
+            lmfao_event = False
+            return await interaction.response.send_message(f"`lmfao_event` disabled. {lmfao_event}", ephemeral=True)
+        elif lmfao_event == False:
+            lmfao_event = True
+            return await interaction.response.send_message(f"`lmfao_event` enabled. {lmfao_event}", ephemeral=True)
     else:
-        return await interaction.response.send_message("**Invalid status type, choose from:** `playing`, `streaming`, `listening`, `watching`, `w_disable`, `w_enable` or `remove`", ephemeral=True)
+        return await interaction.response.send_message("**Invalid status type, choose from:** `playing`, `streaming`, `listening`, `watching`, `w_enable`, `lmfao_event` or `remove`", ephemeral=True)
 
 #MISC MANEGMENT# 
 @bot.tree.command(name="watching", description=":lo:")
-async def change_status(interaction: discord.Interaction, user:discord.Member=None):
+async def watching(interaction: discord.Interaction, user:discord.Member=None):
     global watching_command
     if not watching_command:
         return await interaction.response.send_message("This command is currently disabled.", ephemeral=True)
@@ -454,9 +492,8 @@ async def register_update(interaction: discord.Interaction, new_profile_link: st
 
 @registergroup.command(name="purge", description="This command is used to purge the registry database. [DSBCOMM+]")
 async def register_purge(interaction:discord.Interaction):
-    if not DSBCOMM_A(interaction.user):
-        return await interaction.response.send_message(embed=discord.Embed(title=f"<:dsbbotFailed:953641818057216050> Failed to purge regirty!", description="You must be a member of DSBCOMM or above to purge the registry database.", color=ErrorCOL))
-
+    if not DEVACCESS(interaction.user):
+        return await interaction.response.send_message(embed=discord.Embed(title=f"<:dsbbotFailed:953641818057216050> Failed to purge regirty!", description="You must be mentioned in `DEVACCESS` to purge the registry database.", color=ErrorCOL))
     else:
         await interaction.response.send_message(embed=discord.Embed(description="<:dsbbotUnderReview:1067970676041982053> Waiting for a response..."))
         embed = discord.Embed(color=HRCommandsCOL, description=f"<:dsbbotUnderReview:1067970676041982053> **Are you sure you want to purge the registry database?**\nReact with <:dsbbotApproved:953642750039953418> to confirm.", colour=ErrorCOL)
@@ -475,7 +512,7 @@ async def register_purge(interaction:discord.Interaction):
             await asyncio.gather(*tasks)
 
         else:
-            if DSBCOMM_A(user_r):
+            if DEVACCESS(user_r):
                 success, result = db_register_purge()
                 try:
                     if success:
@@ -530,7 +567,7 @@ class requestButtons(discord.ui.View):
                 add_points(interaction.message.interaction.user.id, self.amount)
                 embed = interaction.message.embeds[0]
                 embed.title=f"<:dsbbotSuccess:953641647802056756> Point Request - {interaction.message.interaction.user.display_name}"
-                embed.color=SuccessCOL
+                embed.color=DarkGreenCOL
                 await interaction.message.edit(embed=embed, view=None)
                 embed=discord.Embed(color=SuccessCOL,title="<:dsbbotAccept:1073668738827694131> Point Request Accepted!", description=f"Your point request has been **accepted** and {self.amount} points have been added. You now have **{get_points(interaction.message.interaction.user.id)}** points.  😎")
                 embed.set_footer(icon_url=interaction.user.avatar, text=f"Reviewed by {interaction.user.display_name} • {datetime.now().strftime('%d.%m.%y at %H:%M')}")
@@ -566,7 +603,28 @@ class requestButtons(discord.ui.View):
         else:
             return
             
-    
+@pointsgroup.command(name="loa_days", description="Sets the amount of days someone has been on LoA for for that block. [DSBPC+]")
+async def loa_quota(interaction:discord.Interaction, member:discord.Member ,set_amount:int):
+    if(not DSBPC_A(interaction.user)): # check if user has permission
+        embed = discord.Embed(color=ErrorCOL, title="<:dsbbotFailed:953641818057216050> Failed to add points to user!", description=f"You must be a member of DSBPC or above to use this command.")
+        return await interaction.response.send_message(embed=embed, ephemeral=True)
+    data = db_register_get_data(member.id)
+    if data:
+        quota, rank = get_point_quota(member)
+        if data[4]:
+            quota_new = int(quota - ((quota/14)*data[4]))
+        if set_days_onloa(member.id, set_amount):
+            updata = db_register_get_data(member.id)
+            if updata[4] is not None:
+                quota_new = int(quota - ((quota/14)*updata[4]))
+            else:
+                quota_new = quota
+            return await interaction.response.send_message(f"{member.mention}", embed = discord.Embed(color=DSBCommandsCOL, title=f"<:dsbbotSuccess:953641647802056756> Default quota set for {member.display_name}!" if set_amount == 0 else f"<:dsbbotSuccess:953641647802056756> New quota for {member.display_name}!", description=f'New quota: **{quota_new} Points** <t:{end_date}:R>\nDays excused: **{updata[4]}**' if updata[4] == None else f'New quota: **{quota_new} Points** <t:{end_date}:R>\nDays excused: **{updata[4]} days**'))
+        else:
+            return await interaction.response.send_message(embed = discord.Embed(color=DSBCommandsCOL, title=f"<:dsbbotFailed:953641818057216050> Failed to set!", description=f"Something went wrong..."), ephemeral=True)
+    else:
+        return await interaction.response.send_message(embed = discord.Embed(title=f"<:dsbbotFailed:953641818057216050> `{member}` not found!", description="User not found in registry database.", color=ErrorCOL), ephemeral=True)
+  
 
 @pointsgroup.command(name="request", description="Used to request points.")
 async def request(interaction:discord.Interaction, amount:int, log:str):
@@ -621,23 +679,76 @@ async def remove(interaction:discord.Interaction, member:discord.Member, amount:
 async def view(interaction: discord.Interaction, user:discord.Member=None):
     if not DSBMEMBER(interaction.user):
         return await interaction.response.send_message(embed=discord.Embed(color=ErrorCOL, title="<:dsbbotFailed:953641818057216050> Missing permissions!", description=f"Only DSB Private First Class or above may interact with DSB Helper."), ephemeral=True)
-    elif user == interaction.user or user == None:
-        user = interaction.user
-        points = get_points(user.id)
-        if points is False:
-            embed = discord.Embed(title=f"<:dsbbotFailed:953641818057216050> No point data found!", description="You are not found in registry database.\n*Use `/db register` to register.*", color=ErrorCOL)
-        elif points:
-            embed = discord.Embed(color=DSBCommandsCOL, title=f"<:dsbbotSuccess:953641647802056756> Point data found!", description=f"**You** have **{points}** point." if points == 1 else f"**You** have **{points}** points.")
-
     else:
-        if not user:
+        embed = discord.Embed(color=DSBCommandsCOL, title=f"<:dsbbotSuccess:953641647802056756> Point data found for {user.display_name}!" if user and user != interaction.user else f"<:dsbbotSuccess:953641647802056756> Point data found!")
+        if user == None:
             user = interaction.user
         points = get_points(user.id)
         if points is False:
-            embed = discord.Embed(title=f"<:dsbbotFailed:953641818057216050> No point data found for `{user}`!", description="User not found in registry database.", color=ErrorCOL)
-        elif points:
-            embed = discord.Embed(color=DSBCommandsCOL, title=f"<:dsbbotSuccess:953641647802056756> Point data found for `{user}`!", description=f"**{user.display_name}** has **{points}** point." if points == 1 else f"**{user.display_name}** has **{points}** points.")
-    await interaction.response.send_message(embed=embed)
+            return await interaction.response.send_message(embed = discord.Embed(title=f"<:dsbbotFailed:953641818057216050> No point data found for `{user}`!", description="User not found in registry database.", color=ErrorCOL))
+        data = db_register_get_data(user.id)
+        if data:
+            if not data[4]:
+                quota, rank = get_point_quota(user)
+            else:
+                quota, rank = get_point_quota(user)
+                quota = int(quota - ((quota/14)*data[4]))
+        if quota:
+            percent = int(points / quota * 100)
+            if percent >= 200:
+                qm = "🟪🟪🟪🟪🟪🟪🟪🟪🟪🟪"
+            elif percent >= 190:
+                qm = "🟪🟪🟪🟪🟪🟪🟪🟪🟪🟦"
+            elif percent >= 180:
+                qm = "🟪🟪🟪🟪🟪🟪🟪🟪🟦🟦"
+            elif percent >= 170:
+                qm = "🟪🟪🟪🟪🟪🟪🟪🟦🟦🟦"
+            elif percent >= 160:
+                qm = "🟪🟪🟪🟪🟪🟪🟦🟦🟦🟦"
+            elif percent >= 150:
+                qm = "🟪🟪🟪🟪🟪🟦🟦🟦🟦🟦"
+            elif percent >= 140:
+                qm = "🟪🟪🟪🟪🟦🟦🟦🟦🟦🟦"
+            elif percent >= 130:
+                qm = "🟪🟪🟪🟦🟦🟦🟦🟦🟦🟦"
+            elif percent >= 120:
+                qm = "🟪🟪🟦🟦🟦🟦🟦🟦🟦🟦"
+            elif percent >= 110:
+                qm = "🟪🟦🟦🟦🟦🟦🟦🟦🟦🟦"
+            elif percent >= 100:
+                qm = "🟦🟦🟦🟦🟦🟦🟦🟦🟦🟦"
+            elif percent >= 90:
+                qm = "🟦🟦🟦🟦🟦🟦🟦🟦🟦⬛"
+            elif percent >= 80:
+                qm = "🟦🟦🟦🟦🟦🟦🟦🟦⬛⬛"
+            elif percent >= 70:
+                qm = "🟦🟦🟦🟦🟦🟦🟦⬛⬛⬛"
+            elif percent >= 60:
+                qm = "🟦🟦🟦🟦🟦🟦⬛⬛⬛⬛"
+            elif percent >= 50:
+                qm = "🟦🟦🟦🟦🟦⬛⬛⬛⬛⬛"
+            elif percent >= 40:
+                qm = "🟦🟦🟦🟦⬛⬛⬛⬛⬛⬛"
+            elif percent >= 30:
+                qm = "🟦🟦🟦⬛⬛⬛⬛⬛⬛⬛"
+            elif percent >= 20:
+                qm = "🟦🟦⬛⬛⬛⬛⬛⬛⬛⬛"
+            elif percent >= 10:
+                qm = "🟦⬛⬛⬛⬛⬛⬛⬛⬛⬛"
+            else:
+                qm = "⬛⬛⬛⬛⬛⬛⬛⬛⬛⬛"
+            embed.add_field(name=f"{qm} {percent:.1f}% || {points}/{quota}", value="")
+            if not data[4]:
+                embed.add_field(name="", value=f"\n\nRank: **{rank}**\nPoints: **{points}**", inline=False)
+            else:
+                embed.add_field(name="", value=f"\n\nRank: **{rank}**\nPoints: **{points}**\nDays excused: **{data[4]}d**", inline=False)
+        else:
+            embed.add_field(name="", value="")
+            embed.add_field(name="", value=f"Rank: {rank}\nPoints: **{points}**", inline=False)
+        
+        await interaction.response.send_message(embed=embed)
+
+
 
 @pointsgroup.command(name="overview",description="Shows leaderboard for points.")
 async def overview(interaction: discord.Interaction):
@@ -700,7 +811,7 @@ async def reset(interaction:discord.Interaction):
                 success = await reset_points()
                 print(success)
                 if success:
-                    embed = discord.Embed(title="<:dsbbotSuccess:953641647802056756> Point reset successful!", description=f"Set all points to `0`", color=discord.Color.green())
+                    embed = discord.Embed(title="<:dsbbotSuccess:953641647802056756> Point reset successful!", description=f"Set all points and days excused to 0.", color=discord.Color.green())
                     await interaction.edit_original_response(embed=embed)
                 else:
                     embed = discord.Embed(title="<:dsbbotFailed:953641818057216050> Point reset failed!", description=f"Something went wrong...", color=ErrorCOL)
@@ -715,10 +826,62 @@ async def mypoints(interaction: discord.Interaction):
     else:
         points = get_points(interaction.user.id)
         if points is False:
-            embed = discord.Embed(title=f"<:dsbbotFailed:953641818057216050> No point data found!", description="You are not found in registry database.\n*Use `/db register` to register.*", color=ErrorCOL)
-        elif points:
-            embed = discord.Embed(color=DSBCommandsCOL, title=f"<:dsbbotSuccess:953641647802056756> Point data found!", description=f"**You** have **{points}** point." if points == 1 else f"**You** have **{points}** points.")
-        await interaction.response.send_message(embed=embed)
+            return await interaction.response.send_message(embed = discord.Embed(title=f"<:dsbbotFailed:953641818057216050> No point data found!", description="You were not found in registry database.\n*Use `/db register` to register.*", color=ErrorCOL))
+        else:            
+            embed = discord.Embed(color=DSBCommandsCOL, title=f"<:dsbbotSuccess:953641647802056756> Point data found!")
+            quota, rank = get_point_quota(interaction.user)
+            if quota:
+                percent = int(points / quota * 100)
+                if percent >= 200:
+                    qm = "🟪🟪🟪🟪🟪🟪🟪🟪🟪🟪"
+                elif percent >= 190:
+                    qm = "🟪🟪🟪🟪🟪🟪🟪🟪🟪🟦"
+                elif percent >= 180:
+                    qm = "🟪🟪🟪🟪🟪🟪🟪🟪🟦🟦"
+                elif percent >= 170:
+                    qm = "🟪🟪🟪🟪🟪🟪🟪🟦🟦🟦"
+                elif percent >= 160:
+                    qm = "🟪🟪🟪🟪🟪🟪🟦🟦🟦🟦"
+                elif percent >= 150:
+                    qm = "🟪🟪🟪🟪🟪🟦🟦🟦🟦🟦"
+                elif percent >= 140:
+                    qm = "🟪🟪🟪🟪🟦🟦🟦🟦🟦🟦"
+                elif percent >= 130:
+                    qm = "🟪🟪🟪🟦🟦🟦🟦🟦🟦🟦"
+                elif percent >= 120:
+                    qm = "🟪🟪🟦🟦🟦🟦🟦🟦🟦🟦"
+                elif percent >= 110:
+                    qm = "🟪🟦🟦🟦🟦🟦🟦🟦🟦🟦"
+                elif percent >= 100:
+                    qm = "🟦🟦🟦🟦🟦🟦🟦🟦🟦🟦"
+                elif percent >= 90:
+                    qm = "🟦🟦🟦🟦🟦🟦🟦🟦🟦⬛"
+                elif percent >= 80:
+                    qm = "🟦🟦🟦🟦🟦🟦🟦🟦⬛⬛"
+                elif percent >= 70:
+                    qm = "🟦🟦🟦🟦🟦🟦🟦⬛⬛⬛"
+                elif percent >= 60:
+                    qm = "🟦🟦🟦🟦🟦🟦⬛⬛⬛⬛"
+                elif percent >= 50:
+                    qm = "🟦🟦🟦🟦🟦⬛⬛⬛⬛⬛"
+                elif percent >= 40:
+                    qm = "🟦🟦🟦🟦⬛⬛⬛⬛⬛⬛"
+                elif percent >= 30:
+                    qm = "🟦🟦🟦⬛⬛⬛⬛⬛⬛⬛"
+                elif percent >= 20:
+                    qm = "🟦🟦⬛⬛⬛⬛⬛⬛⬛⬛"
+                elif percent >= 10:
+                    qm = "🟦⬛⬛⬛⬛⬛⬛⬛⬛⬛"
+                else:
+                    qm = "⬛⬛⬛⬛⬛⬛⬛⬛⬛⬛"
+                embed.add_field(name=f"{qm} {percent:.1f}% || {points}/{quota}", value="")
+                embed.add_field(name="", value=f"\n\nRank: **{rank}**\nPoints: **{points}**", inline=False)
+            else:
+                embed.add_field(name="", value="")
+                embed.add_field(name="", value=f"Rank: {rank}\nPoints: **{points}**", inline=False)
+            await interaction.response.send_message(embed=embed)
+
+
 
 
 
@@ -736,7 +899,7 @@ class InfoboardOptions(discord.ui.Select):
         
     async def callback(self, interaction: discord.Interaction):
         if self.values[0] == "DHI":
-            embed = discord.Embed(title="**<:DSB:1060271947725930496> DSB Helper Infoboard**", description="The DSB Helper mainly manages the points based quota system. Provided are infoboards with various commands and information related to the bot. See the dropdown menu below.", color=DSBCommandsCOL)
+            embed = discord.Embed(title="**<:DSB:1060271947725930496> DSB Helper Infoboard**", description="The DSB Helper mainly manages the points based quota system. Provided are infoboards with various commands and information related to the bot. See the dropdown menu below.\n*Board is still outdated, command wise.*", color=DSBCommandsCOL)
             embed.add_field(name="Credits", value="- Main developer: Blue\n- Bot host: Orange\n- Frontend Design: Shush & Polish\n- Bot testing: the suffering + Polish")
             embed.set_footer(text="DSB Helper v.idk")
             embed.set_thumbnail(url="https://images-ext-1.discordapp.net/external/lnHKwZ40MRhYKuNJpNUS8NQiaekqkgfW9TaGj-B5Yg0/https/tr.rbxcdn.com/580b2e0cd698decfa585464b50a4278c/150/150/Image/Png")
@@ -770,7 +933,7 @@ class InfoboardView(discord.ui.View):
 
 @bot.tree.command(name="infoboard",description="Shows bot information and a list of commands.")
 async def infoboard(interaction: discord.Interaction):
-    embed = discord.Embed(title="**DSB Helper Infoboard**", description="The DSB Helper mainly manages the points based quota system. Provided are infoboards with various commands and information related to the bot. See the dropdown menu below.", color=DSBCommandsCOL)
+    embed = discord.Embed(title="**DSB Helper Infoboard**", description="The DSB Helper mainly manages the points based quota system. Provided are infoboards with various commands and information related to the bot. See the dropdown menu below.\n*Board is still outdated, command wise.*", color=DSBCommandsCOL)
     embed.add_field(name="Credits", value="- Main developer: Blue\n- Bot host: Orange\n- Frontend Design: Shush & Polish\n- Bot testing: the suffering + Polish")
     embed.set_footer(text="DSB Helper v.idk")
     embed.set_thumbnail(url="https://images-ext-1.discordapp.net/external/lnHKwZ40MRhYKuNJpNUS8NQiaekqkgfW9TaGj-B5Yg0/https/tr.rbxcdn.com/580b2e0cd698decfa585464b50a4278c/150/150/Image/Png")

@@ -85,7 +85,7 @@ def get_vc_id(key):
     }
     return data.get(key, None)
 
-def get_point_quota(user):
+def get_point_quota(user, data=None):
     role_quota = {
         "Private First Class": (16, "Private First Class"),
         "Corporal": (16, "**Corporal**"),
@@ -107,7 +107,11 @@ def get_point_quota(user):
     
     for role in user.roles:
         if role.name in role_quota:
-            return role_quota[role.name]
+            quota, rank = role_quota[role.name]
+            if data and data[4]:
+                quota = int(quota - ((quota/14)*data[4]))
+            return quota, rank
+    
     return None, None
 
 @bot.event
@@ -687,16 +691,12 @@ async def view(interaction: discord.Interaction, user:discord.Member=None):
         if points is False:
             return await interaction.response.send_message(embed = discord.Embed(title=f"<:dsbbotFailed:953641818057216050> No point data found for `{user}`!", description="User not found in registry database.", color=ErrorCOL))
         data = db_register_get_data(user.id)
-        if data:
-            if not data[4]:
-                quota, rank = get_point_quota(user)
-            else:
-                quota, rank = get_point_quota(user)
-                if quota is not None:
-                    quota = int(quota - ((quota/14)*data[4]))
+        quota, rank = get_point_quota(user, data)
         if quota:
             percent = float(points / quota * 100)
-            if percent >= 200:
+            if percent > 200:
+                qm = "🌟"
+            elif percent >= 200:
                 qm = "🟪🟪🟪🟪🟪🟪🟪🟪🟪🟪"
             elif percent >= 190:
                 qm = "🟪🟪🟪🟪🟪🟪🟪🟪🟪🟦"
@@ -830,10 +830,13 @@ async def mypoints(interaction: discord.Interaction):
             return await interaction.response.send_message(embed = discord.Embed(title=f"<:dsbbotFailed:953641818057216050> No point data found!", description="You were not found in registry database.\n*Use `/db register` to register.*", color=ErrorCOL))
         else:            
             embed = discord.Embed(color=DSBCommandsCOL, title=f"<:dsbbotSuccess:953641647802056756> Point data found!")
-            quota, rank = get_point_quota(interaction.user)
+            data = db_register_get_data(interaction.user.id)
+            quota, rank = get_point_quota(interaction.user, data)
             if quota:
                 percent = float(points / quota * 100)
-                if percent >= 200:
+                if percent > 200:
+                    qm = "🌟"
+                elif percent >= 200:
                     qm = "🟪🟪🟪🟪🟪🟪🟪🟪🟪🟪"
                 elif percent >= 190:
                     qm = "🟪🟪🟪🟪🟪🟪🟪🟪🟪🟦"

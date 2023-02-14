@@ -695,7 +695,7 @@ async def view(interaction: discord.Interaction, user:discord.Member=None):
                 if quota is not None:
                     quota = int(quota - ((quota/14)*data[4]))
         if quota:
-            percent = int(points / quota * 100)
+            percent = float(points / quota * 100)
             if percent >= 200:
                 qm = "🟪🟪🟪🟪🟪🟪🟪🟪🟪🟪"
             elif percent >= 190:
@@ -832,7 +832,7 @@ async def mypoints(interaction: discord.Interaction):
             embed = discord.Embed(color=DSBCommandsCOL, title=f"<:dsbbotSuccess:953641647802056756> Point data found!")
             quota, rank = get_point_quota(interaction.user)
             if quota:
-                percent = int(points / quota * 100)
+                percent = float(points / quota * 100)
                 if percent >= 200:
                     qm = "🟪🟪🟪🟪🟪🟪🟪🟪🟪🟪"
                 elif percent >= 190:

@@ -542,8 +542,10 @@ class requestButtons(discord.ui.View):
 @pointsgroup.command(name="loa_days", description="Sets the amount of days someone has been on LoA for for that block. [DSBPC+]")
 async def loa_quota(interaction:discord.Interaction, member:discord.Member ,set_amount:int):
     if(not DSBPC_A(interaction.user)): # check if user has permission
-        embed = discord.Embed(color=ErrorCOL, title="<:dsbbotFailed:953641818057216050> Failed to add points to user!", description=f"You must be a member of DSBPC or above to use this command.")
+        embed = discord.Embed(color=ErrorCOL, title="<:dsbbotFailed:953641818057216050> Failed to set days!", description=f"You must be a member of DSBPC or above to use this command.")
         return await interaction.response.send_message(embed=embed, ephemeral=True)
+    if set_amount > 14:
+        return await interaction.response.send_message(embed=discord.Embed(title="<:dsbbotFailed:953641818057216050> Failed to set days!", description=f"`set_amount` cannot be over 14 days."), ephemeral=True)
     data = db_register_get_data(member.id)
     if data:
         quota, rank = get_point_quota(member)

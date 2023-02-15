@@ -211,7 +211,6 @@ def totalquota_withoutPC():
         if member:
             if DSBPC_A(member)==False and onLoA(member)==False:
                 quota, rank = get_point_quota(member, row)
-                print(quota, member)
                 if quota != None:
                     total_quota += quota
     return total_quota

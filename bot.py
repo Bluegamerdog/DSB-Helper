@@ -683,7 +683,8 @@ async def view(interaction: discord.Interaction, user:discord.Member=None):
 
 
 class overviewButtons(discord.ui.View):
-
+    discord.ui.View.timeout = None
+    
     @discord.ui.button(emoji="◀️", style=discord.ButtonStyle.gray)
     async def PreviousButton(self, interaction:discord.Interaction, button:discord.ui.Button):
         page, last_user_count = get_leaderboard_page(interaction.message.id)

@@ -85,7 +85,7 @@ def get_vc_id(key):
     }
     return data.get(key, None)
 
-def get_point_quota(user):
+def get_point_quota(user, data=None):
     role_quota = {
         "Private First Class": (16, "Private First Class"),
         "Corporal": (16, "**Corporal**"),
@@ -107,7 +107,11 @@ def get_point_quota(user):
     
     for role in user.roles:
         if role.name in role_quota:
-            return role_quota[role.name]
+            quota, rank = role_quota[role.name]
+            if data and data[4]:
+                quota = int(quota - ((quota/14)*data[4]))
+            return quota, rank
+    
     return None, None
 
 @bot.event
@@ -192,6 +196,43 @@ def DEVACCESS(user):
         return True
     return False
 
+def onLoA(user): # check if user has DSB role
+    roles = user.roles
+    for role in roles:
+        if role.name in ["DSB Leave of Absence"]:
+            return True
+    return False
+
+def totalquota_withoutPC():
+    rows = db_get_all_data()
+    total_quota:int = 0
+    for row in rows:
+        member = bot.get_guild(DSBSeverID).get_member(row[1])
+        if member:
+            if DSBPC_A(member)==False and onLoA(member)==False:
+                quota, rank = get_point_quota(member, row)
+                print(quota, member)
+                if quota != None:
+                    total_quota += quota
+    return total_quota
+
+def totalpoints_withoutPC():
+    rows = db_get_all_data()
+    total_points:int = 0
+    for row in rows:
+        member = bot.get_guild(DSBSeverID).get_member(row[1])
+        if member:
+            if DSBPC_A(member)==False:
+                total_points += row[3]
+    return total_points    
+
+def get_quota_completion_percentage():
+    total_quota = totalquota_withoutPC()
+    if total_quota == 0:
+        return 0
+    else:
+        return (totalpoints_withoutPC() / total_quota) * 100
+
 @bot.event
 async def on_message(message):
     if lmfao_event == True and message.author.id != 776226471575683082:
@@ -199,111 +240,7 @@ async def on_message(message):
             await message.reply("Who is Lmfao? 🤨\nHe's a hacker, he's a Chinese hacker.\nLmfao, he's working for the Koreans isn't he?")
 
 @bot.event
-async def on_reaction_add(reaction, user):
-    #next 
-    if(reaction.emoji == u"\u25B6") and user.id != bot.user.id:
-        page, last_user_count = get_leaderboard_page(reaction.message.id)
-        if(last_user_count < page * 10):
-            return
-        rows = get_users_amount(page+1)
-        embed = discord.Embed(title =f"**Point Overview - Block {blocknumber}**", description=f"----------------------------------------------------------\nCurrent quota block ending <t:{end_date}:R>.\n<t:{start_date}> - <t:{end_date}>\n----------------------------------------------------------", color=DSBCommandsCOL)
-        has_points = False
-        for row in rows:
-            if(row[1] != None and int(row[3]) >= 1): # added check for points 
-                user = bot.get_user(int(row[1]))
-                if user:
-                    member = bot.get_guild(DSBSeverID).get_member(user.id)
-                    if member:
-                        nickname = member.nick or user.name
-                    else:
-                        nickname = user.name
-                else:
-                    nickname = "User not found"
-                user = "#" + str(last_user_count) + " | " + str(nickname)
-                embed.add_field(name = user, value = '{:,}'.format(int(row[3])), inline=False)
-                last_user_count += 1       
-        update_leaderboard(page + 1, last_user_count, reaction.message.id)
-        await reaction.message.edit(embed = embed)
-        await reaction.message.clear_reactions()
-        await reaction.message.add_reaction(u"\u25C0")
-        await reaction.message.add_reaction("<:dsbbotRefresh:1071533380581208146>")
-        if(last_user_count > (page+1) * 10):
-            await reaction.message.add_reaction(u"\u25B6")
-    
-    # Refresh
-    if(str(reaction.emoji) == '<:dsbbotRefresh:1071533380581208146>') and user.id != bot.user.id:
-        page, last_user_count = get_leaderboard_page(reaction.message.id)
-        rows = get_users_amount(page)
-        embed = discord.Embed(title =f"**Point Overview - Block {blocknumber}**", description=f"----------------------------------------------------------\nCurrent quota block ending <t:{end_date}:R>.\n<t:{start_date}> - <t:{end_date}>\n----------------------------------------------------------", color=DSBCommandsCOL)
-        last_user_count = (page - 1) * 10 + 1
-        
-        has_points = False
-        for row in rows:
-            if(row[1] != None and int(row[3]) >= 1): # added check for points >= 1
-                has_points = True
-                user = bot.get_user(int(row[1]))
-                if user:
-                    member = bot.get_guild(DSBSeverID).get_member(user.id)
-                    if member:
-                        nickname = member.nick or user.name
-                    else:
-                        nickname = user.name
-                else:
-                    nickname = "User not found"
-                user = "#" + str(last_user_count) + " | " + str(nickname)
-                embed.add_field(name = user, value = '{:,}'.format(int(row[3])), inline=False)
-                last_user_count += 1
-        if not has_points and last_user_count == 1:
-            embed.add_field(name="", value="")
-            embed.add_field(name="", value="*<:dsbbotCaution:1067970676041982053> No point data found, it seems no one currently has any points.*")
-        
-        update_leaderboard(page, last_user_count, reaction.message.id)
-        await reaction.message.edit(embed = embed)
-        await reaction.message.clear_reactions()
-        if(page > 1):
-            await reaction.message.add_reaction(u"\u25C0")
-            await reaction.message.add_reaction("<:dsbbotRefresh:1071533380581208146>")
-        elif(last_user_count > (page) * 10):
-            await reaction.message.add_reaction("<:dsbbotRefresh:1071533380581208146>")
-            await reaction.message.add_reaction(u"\u25B6")
-        else:
-            await reaction.message.add_reaction("<:dsbbotRefresh:1071533380581208146>")
-        
-    # Prev
-    if(reaction.emoji == u"\u25C0") and user.id != bot.user.id:
-        page, last_user_count = get_leaderboard_page(reaction.message.id)
-        if(page == 1):
-            return
-        rows = get_users_amount(page-1)
-        embed = discord.Embed(title =f"**Point Overview - Block {blocknumber}**", description=f"----------------------------------------------------------\nCurrent quota block ending <t:{end_date}:R>.\n<t:{start_date}> - <t:{end_date}>\n----------------------------------------------------------", color=DSBCommandsCOL)
-        if(last_user_count <= page * 10):
-            last_user_count -= 10 + (last_user_count-1) % 10
-        else:
-            last_user_count -= 20
-        
-        for row in rows:
-            if(row[1] != None and int(row[3]) >= 1): # added check for points >= 1
-                user = bot.get_user(int(row[1]))
-                if user:
-                    member = bot.get_guild(DSBSeverID).get_member(user.id)
-                    if member:
-                        nickname = member.nick or user.name
-                    else:
-                        nickname = user.name
-                else:
-                    nickname = "User not found"
-                user = "#" + str(last_user_count) + " | " + str(nickname)
-                embed.add_field(name = user, value = '{:,}'.format(int(row[3])), inline=False)
-                last_user_count += 1
-        update_leaderboard(page - 1, last_user_count, reaction.message.id)
-        await reaction.message.edit(embed = embed)
-        await reaction.message.clear_reactions()
-        if(page - 1 > 1):
-            await reaction.message.add_reaction(u"\u25C0")
-        await reaction.message.add_reaction("<:dsbbotRefresh:1071533380581208146>")
-        await reaction.message.add_reaction(u"\u25B6")
-        
-    
+async def on_reaction_add(reaction, user):    
     if str(reaction.emoji) == "<:dsbbotSuccess:953641647802056756>" and reaction.message.channel.id == 983194737882312714 and DSBPC_A(reaction.user):
         role_name = "On LoA"
         role = discord.utils.get(reaction.message.guild.roles, name=role_name)
@@ -687,16 +624,12 @@ async def view(interaction: discord.Interaction, user:discord.Member=None):
         if points is False:
             return await interaction.response.send_message(embed = discord.Embed(title=f"<:dsbbotFailed:953641818057216050> No point data found for `{user}`!", description="User not found in registry database.", color=ErrorCOL))
         data = db_register_get_data(user.id)
-        if data:
-            if not data[4]:
-                quota, rank = get_point_quota(user)
-            else:
-                quota, rank = get_point_quota(user)
-                if quota is not None:
-                    quota = int(quota - ((quota/14)*data[4]))
+        quota, rank = get_point_quota(user, data)
         if quota:
             percent = float(points / quota * 100)
-            if percent >= 200:
+            if percent > 200:
+                qm = "🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟"
+            elif percent >= 200:
                 qm = "🟪🟪🟪🟪🟪🟪🟪🟪🟪🟪"
             elif percent >= 190:
                 qm = "🟪🟪🟪🟪🟪🟪🟪🟪🟪🟦"
@@ -750,18 +683,49 @@ async def view(interaction: discord.Interaction, user:discord.Member=None):
         await interaction.response.send_message(embed=embed)
 
 
+class overviewButtons(discord.ui.View):
 
-@pointsgroup.command(name="overview",description="Shows leaderboard for points.")
-async def overview(interaction: discord.Interaction):
-    if not DSBMEMBER(interaction.user):
-        return await interaction.response.send_message(embed=discord.Embed(color=ErrorCOL, title="<:dsbbotFailed:953641818057216050> Missing permissions!", description=f"Only DSB Private First Class or above may interact with DSB Helper."), ephemeral=True)
-    else:
-        gettingembed = discord.Embed(description="Getting data...")
-        await interaction.response.send_message(embed=gettingembed)
-        rows = get_users_amount(1)                                                                   
-        embed = discord.Embed(title =f"**Point Overview - Block {blocknumber}**", description=f"----------------------------------------------------------\nCurrent quota block ending <t:{end_date}:R>.\n<t:{start_date}> - <t:{end_date}>\n----------------------------------------------------------", color=DSBCommandsCOL)
-        count = 1
+    @discord.ui.button(emoji="◀️", style=discord.ButtonStyle.gray)
+    async def PreviousButton(self, interaction:discord.Interaction, button:discord.ui.Button):
+        page, last_user_count = get_leaderboard_page(interaction.message.id)
+        if page == 1:
+            button.disabled = True
+            return await interaction.response.defer()
+        rows = get_users_amount(page-1)
+        if(last_user_count <= page * 10):
+            last_user_count -= 10 + (last_user_count-1) % 10
+        else:
+            last_user_count -= 20
+        embed = interaction.message.embeds[0]
+        embed.clear_fields()
+        for row in rows:
+            if(row[1] != None and int(row[3]) >= 1): # added check for points >= 1
+                user = bot.get_user(int(row[1]))
+                if user:
+                    member = bot.get_guild(DSBSeverID).get_member(user.id)
+                    if member:
+                        nickname = member.nick or user.name
+                    else:
+                        nickname = user.name
+                else:
+                    nickname = "User not found"
+                user = str(last_user_count) + ". || " + str(nickname)
+                embed.add_field(name = "", value = f"**{user}**\nPoints: " + '{:,}'.format(int(row[3])), inline=False)
+                last_user_count += 1
+        update_leaderboard(page - 1, last_user_count, interaction.message.id)
+        page_u, last_user_count_u = get_leaderboard_page(interaction.message.id)
+        embed.set_footer(text=f"Page {page_u}")
+        await interaction.message.edit(embed=embed, view=overviewButtons())
+        await interaction.response.defer()
+
+    @discord.ui.button(emoji="<:dsbbotRefresh:1071533380581208146>", style=discord.ButtonStyle.gray)
+    async def RefreshButton(self, interaction:discord.Interaction, button:discord.ui.Button):
+        page, last_user_count = get_leaderboard_page(interaction.message.id)
+        rows = get_users_amount(page)
+        last_user_count = (page - 1) * 10 + 1
         has_points = False
+        embed = interaction.message.embeds[0]
+        embed.clear_fields()
         for row in rows:
             if(row[1] != None and int(row[3]) >= 1):
                 has_points = True
@@ -774,17 +738,150 @@ async def overview(interaction: discord.Interaction):
                         nickname = user.name
                 else:
                     nickname = "User not found"
-                user = "#" + str(count) + " | " + str(nickname)
-                embed.add_field(name = user, value = '{:,}'.format(int(row[3])), inline=False)
+                user = str(last_user_count) + ". || " + str(nickname)
+                embed.add_field(name = "", value = f"**{user}**\nPoints: " + '{:,}'.format(int(row[3])), inline=False)
+                last_user_count += 1
+        if not has_points:
+            embed.add_field(name="", value="***No point data over `0` found in `rows`.***")
+        update_leaderboard(page, last_user_count, interaction.message.id)
+        page_u, last_user_count_u = get_leaderboard_page(interaction.message.id)
+        embed.set_footer(text=f"Page {page_u}")
+        await interaction.message.edit(embed=embed, view=overviewButtons())
+        await interaction.response.defer()
+
+    @discord.ui.button(emoji="▶️", style=discord.ButtonStyle.gray)
+    async def NextButton(self, interaction:discord.Interaction, button:discord.ui.Button):        
+        page, last_user_count = get_leaderboard_page(interaction.message.id)
+        if(last_user_count-1 < page * 10):
+            button.disabled = True
+            return await interaction.response.defer()
+        rows = get_users_amount(page+1)
+        embed = interaction.message.embeds[0]
+        embed.clear_fields()
+        for row in rows:
+            if(row[1] != None and int(row[3]) >= 1): # added check for points 
+                user = bot.get_user(int(row[1]))
+                if user:
+                    member = bot.get_guild(DSBSeverID).get_member(user.id)
+                    if member:
+                        nickname = member.nick or user.name
+                    else:
+                        nickname = user.name
+                else:
+                    nickname = "User not found"
+                user = str(last_user_count) + ". || " + str(nickname)
+                embed.add_field(name = "", value = f"**{user}**\nPoints: " + '{:,}'.format(int(row[3])), inline=False)
+                last_user_count += 1     
+        update_leaderboard(page + 1, last_user_count, interaction.message.id)
+        page_u, last_user_count_u = get_leaderboard_page(interaction.message.id)
+        embed.set_footer(text=f"Page {page_u}")
+        await interaction.message.edit(embed=embed, view=overviewButtons())
+        await interaction.response.defer()
+        
+    @discord.ui.button(emoji="<:dsbbotEmpty:1075113389526888608>", style=discord.ButtonStyle.gray, disabled=True)
+    async def EmptyButton(self, interaction:discord.Interaction, button:discord.ui.Button):
+        pass
+
+    @discord.ui.button(emoji="ℹ️", style=discord.ButtonStyle.gray)
+    async def InfoButton(self, interaction:discord.Interaction, button:discord.ui.Button):
+        embed = interaction.message.embeds[0]
+        embed.clear_fields()
+        embed.remove_footer()
+        embed.title = f"Quota Summary - Block {blocknumber}"
+        embed.description = f"Quota block {blocknumber} ends <t:{end_date}:R>. \n<t:{start_date}> - <t:{end_date}>"
+        
+        data = db_register_get_data(interaction.user.id)
+        if data:
+            if not data[4]:
+                quota, rank = get_point_quota(interaction.user)
+            else:
+                quota, rank = get_point_quota(interaction.user)
+                if quota is not None:
+                    quota = int(quota - ((quota/14)*data[4]))
+
+        completion_percentage = get_quota_completion_percentage()
+        if completion_percentage > 200:
+            qm = "🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟"
+        elif completion_percentage >= 200:
+            qm = "🟪🟪🟪🟪🟪🟪🟪🟪🟪🟪"
+        elif completion_percentage >= 190:
+            qm = "🟪🟪🟪🟪🟪🟪🟪🟪🟪🟦"
+        elif completion_percentage >= 180:
+            qm = "🟪🟪🟪🟪🟪🟪🟪🟪🟦🟦"
+        elif completion_percentage >= 170:
+            qm = "🟪🟪🟪🟪🟪🟪🟪🟦🟦🟦"
+        elif completion_percentage >= 160:
+            qm = "🟪🟪🟪🟪🟪🟪🟦🟦🟦🟦"
+        elif completion_percentage >= 150:
+            qm = "🟪🟪🟪🟪🟪🟦🟦🟦🟦🟦"
+        elif completion_percentage >= 140:
+            qm = "🟪🟪🟪🟪🟦🟦🟦🟦🟦🟦"
+        elif completion_percentage >= 130:
+            qm = "🟪🟪🟪🟦🟦🟦🟦🟦🟦🟦"
+        elif completion_percentage >= 120:
+            qm = "🟪🟪🟦🟦🟦🟦🟦🟦🟦🟦"
+        elif completion_percentage >= 110:
+            qm = "🟪🟦🟦🟦🟦🟦🟦🟦🟦🟦"
+        elif completion_percentage >= 100:
+            qm = "🟦🟦🟦🟦🟦🟦🟦🟦🟦🟦"
+        elif completion_percentage >= 90:
+            qm = "🟦🟦🟦🟦🟦🟦🟦🟦🟦⬛"
+        elif completion_percentage >= 80:
+            qm = "🟦🟦🟦🟦🟦🟦🟦🟦⬛⬛"
+        elif completion_percentage >= 70:
+            qm = "🟦🟦🟦🟦🟦🟦🟦⬛⬛⬛"
+        elif completion_percentage >= 60:
+            qm = "🟦🟦🟦🟦🟦🟦⬛⬛⬛⬛"
+        elif completion_percentage >= 50:
+            qm = "🟦🟦🟦🟦🟦⬛⬛⬛⬛⬛"
+        elif completion_percentage >= 40:
+            qm = "🟦🟦🟦🟦⬛⬛⬛⬛⬛⬛"
+        elif completion_percentage >= 30:
+            qm = "🟦🟦🟦⬛⬛⬛⬛⬛⬛⬛"
+        elif completion_percentage >= 20:
+            qm = "🟦🟦⬛⬛⬛⬛⬛⬛⬛⬛"
+        elif completion_percentage >= 10:
+            qm = "🟦⬛⬛⬛⬛⬛⬛⬛⬛⬛"
+        else:
+            qm = "⬛⬛⬛⬛⬛⬛⬛⬛⬛⬛"
+        embed.add_field(name=f"Total quota completion:", value=f"{qm} {completion_percentage:.1f}% || {totalpoints_withoutPC()}/{totalquota_withoutPC()}")
+        await interaction.message.edit(embed=embed, view=overviewButtons())
+        await interaction.response.defer()
+
+
+
+@pointsgroup.command(name="overview",description="Shows leaderboard for points.")
+async def overview(interaction: discord.Interaction):
+    if not DSBMEMBER(interaction.user):
+        return await interaction.response.send_message(embed=discord.Embed(color=ErrorCOL, title="<:dsbbotFailed:953641818057216050> Missing permissions!", description=f"Only DSB Private First Class or above may interact with DSB Helper."), ephemeral=True)
+    else:
+        gettingembed = discord.Embed(description="Getting data...")
+        await interaction.response.send_message(embed=gettingembed)
+        rows = get_users_amount(1)                                                                   
+        embed = discord.Embed(title =f"Point Overview  -  Block {blocknumber}", description=f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nQuota block {blocknumber} ends <t:{end_date}:R>. \n<t:{start_date}> - <t:{end_date}>\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", color=DSBCommandsCOL)
+        count = 1
+        has_points = False
+        embed.set_footer(text=f"Page 1")
+        for row in rows:
+            if(row[1] != None and int(row[3]) >= 1):
+                has_points = True
+                user = bot.get_user(int(row[1]))
+                if user:
+                    member = bot.get_guild(DSBSeverID).get_member(user.id)
+                    if member:
+                        nickname = member.nick or user.name
+                    else:
+                        nickname = user.name
+                else:
+                    nickname = "User not found"
+                user = str(count) + ". || " + str(nickname)
+                embed.add_field(name = "", value = f"**{user}**\nPoints: " + '{:,}'.format(int(row[3])), inline=False)
                 count += 1
-        if not has_points and count == 1:
+        if not has_points:
             embed.add_field(name="", value="")
-            embed.add_field(name="", value="*<:dsbbotCaution:1067970676041982053> No point data found, it seems no one currently has any points.*")
-        msg_sent = await interaction.edit_original_response(embed=embed)
+            embed.add_field(name="", value="*No point data found, it seems no one currently has any points.*")
+        msg_sent = await interaction.edit_original_response(embed=embed, view=overviewButtons())
         add_leaderboard(interaction.user.id, msg_sent.id, count)
-        await msg_sent.add_reaction("<:dsbbotRefresh:1071533380581208146>")
-        if(count >= 11):
-            await msg_sent.add_reaction(u"\u25B6")
 
 @pointsgroup.command(name="reset",description="Resets the points of all users to zero. [DSBPC+]")
 async def reset(interaction:discord.Interaction):
@@ -830,10 +927,13 @@ async def mypoints(interaction: discord.Interaction):
             return await interaction.response.send_message(embed = discord.Embed(title=f"<:dsbbotFailed:953641818057216050> No point data found!", description="You were not found in registry database.\n*Use `/db register` to register.*", color=ErrorCOL))
         else:            
             embed = discord.Embed(color=DSBCommandsCOL, title=f"<:dsbbotSuccess:953641647802056756> Point data found!")
-            quota, rank = get_point_quota(interaction.user)
+            data = db_register_get_data(interaction.user.id)
+            quota, rank = get_point_quota(interaction.user, data)
             if quota:
                 percent = float(points / quota * 100)
-                if percent >= 200:
+                if percent > 200:
+                    qm = "🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟"
+                elif percent >= 200:
                     qm = "🟪🟪🟪🟪🟪🟪🟪🟪🟪🟪"
                 elif percent >= 190:
                     qm = "🟪🟪🟪🟪🟪🟪🟪🟪🟪🟦"

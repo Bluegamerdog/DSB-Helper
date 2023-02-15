@@ -74,6 +74,11 @@ def db_register_get_data(user_id):
     else:
         return user_data
 
+def db_get_all_data():
+    conn, cur = get_conn()
+    cur.execute("SELECT * FROM users")
+    rows = cur.fetchall()
+    return rows
 
 def db_register_purge():
     conn, cur = get_conn()

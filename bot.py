@@ -105,12 +105,16 @@ def get_point_quota(user, data=None):
         "QSO Command": (None, "**QSO Command**")
     }
     
+    has_leave_of_absence = False
+    
     for role in user.roles:
-        if role.name in role_quota:
+        if role.name == "DSB Leave of Absence":
+            has_leave_of_absence = True
+        elif role.name in role_quota:
             quota, rank = role_quota[role.name]
             if data and data[4]:
                 quota = int(quota - ((quota/14)*data[4]))
-            return quota, rank
+            return None if has_leave_of_absence else quota, rank
     
     return None, None
 
@@ -624,9 +628,10 @@ async def view(interaction: discord.Interaction, user:discord.Member=None):
         points = get_points(user.id)
         if points is False:
             return await interaction.response.send_message(embed = discord.Embed(title=f"<:dsbbotFailed:953641818057216050> No point data found for `{user}`!", description="User not found in registry database.", color=ErrorCOL))
+        embed = discord.Embed(color=DSBCommandsCOL, title=f"<:dsbbotSuccess:953641647802056756> Point data found!")
         data = db_register_get_data(user.id)
         quota, rank = get_point_quota(user, data)
-        if quota:
+        if quota and onLoA(user) == False:
             percent = float(points / quota * 100)
             if percent > 200:
                 qm = "🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟"
@@ -672,6 +677,58 @@ async def view(interaction: discord.Interaction, user:discord.Member=None):
                 qm = "🟦⬛⬛⬛⬛⬛⬛⬛⬛⬛"
             else:
                 qm = "⬛⬛⬛⬛⬛⬛⬛⬛⬛⬛"
+            embed.add_field(name=f"{qm} {percent:.1f}% || {points}/{quota}", value="")
+            if not data[4]:
+                embed.add_field(name="", value=f"\n\nRank: **{rank}**\nPoints: **{points}**", inline=False)
+            else:
+                embed.add_field(name="", value=f"\n\nRank: **{rank}**\nPoints: **{points}**\nDays excused: **{data[4]}d**", inline=False)
+        elif quota and onLoA(user):
+            percent = float(points / quota * 100)
+            if percent > 200:
+                qm = "🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟"
+            elif percent >= 200:
+                qm = ":regional_indicator_l::regional_indicator_o::regional_indicator_a:🟪🟪🟪🟪🟪🟪🟪"
+            elif percent >= 190:
+                qm = ":regional_indicator_l::regional_indicator_o::regional_indicator_a:🟪🟪🟪🟪🟪🟪🟦"
+            elif percent >= 180:
+                qm = ":regional_indicator_l::regional_indicator_o::regional_indicator_a:🟪🟪🟪🟪🟪🟦🟦"
+            elif percent >= 170:
+                qm = ":regional_indicator_l::regional_indicator_o::regional_indicator_a:🟪🟪🟪🟪🟦🟦🟦"
+            elif percent >= 160:
+                qm = ":regional_indicator_l::regional_indicator_o::regional_indicator_a:🟪🟪🟪🟦🟦🟦🟦"
+            elif percent >= 150:
+                qm = ":regional_indicator_l::regional_indicator_o::regional_indicator_a:🟪🟪🟦🟦🟦🟦🟦"
+            elif percent >= 140:
+                qm = ":regional_indicator_l::regional_indicator_o::regional_indicator_a:🟪🟦🟦🟦🟦🟦🟦"
+            elif percent >= 130:
+                qm = ":regional_indicator_l::regional_indicator_o::regional_indicator_a:🟦🟦🟦🟦🟦🟦🟦"
+            elif percent >= 120:
+                qm = ":regional_indicator_l::regional_indicator_o::regional_indicator_a:🟦🟦🟦🟦🟦🟦🟦"
+            elif percent >= 110:
+                qm = ":regional_indicator_l::regional_indicator_o::regional_indicator_a:🟦🟦🟦🟦🟦🟦🟦"
+            elif percent >= 100:
+                qm = ":regional_indicator_l::regional_indicator_o::regional_indicator_a:🟦🟦🟦🟦🟦🟦🟦"
+            elif percent >= 90:
+                qm = ":regional_indicator_l::regional_indicator_o::regional_indicator_a:🟦🟦🟦🟦🟦🟦⬛"
+            elif percent >= 80:
+                qm = ":regional_indicator_l::regional_indicator_o::regional_indicator_a:🟦🟦🟦🟦🟦⬛⬛"
+            elif percent >= 70:
+                qm = ":regional_indicator_l::regional_indicator_o::regional_indicator_a:🟦🟦🟦🟦⬛⬛⬛"
+            elif percent >= 60:
+                qm = ":regional_indicator_l::regional_indicator_o::regional_indicator_a:🟦🟦🟦⬛⬛⬛⬛"
+            elif percent >= 50:
+                qm = ":regional_indicator_l::regional_indicator_o::regional_indicator_a:🟦🟦⬛⬛⬛⬛⬛"
+            elif percent >= 40:
+                qm = ":regional_indicator_l::regional_indicator_o::regional_indicator_a:🟦⬛⬛⬛⬛⬛⬛"
+            elif percent >= 30:
+                qm = ":regional_indicator_l::regional_indicator_o::regional_indicator_a:⬛⬛⬛⬛⬛⬛⬛"
+            elif percent >= 20:
+                qm = ":regional_indicator_l::regional_indicator_o::regional_indicator_a:⬛⬛⬛⬛⬛⬛⬛"
+            elif percent >= 10:
+                qm = ":regional_indicator_l::regional_indicator_o::regional_indicator_a:⬛⬛⬛⬛⬛⬛⬛"
+            else:
+                qm = ":regional_indicator_l::regional_indicator_o::regional_indicator_a:⬛⬛⬛⬛⬛⬛⬛"
+            quota = 0
             embed.add_field(name=f"{qm} {percent:.1f}% || {points}/{quota}", value="")
             if not data[4]:
                 embed.add_field(name="", value=f"\n\nRank: **{rank}**\nPoints: **{points}**", inline=False)
@@ -931,7 +988,7 @@ async def mypoints(interaction: discord.Interaction):
             embed = discord.Embed(color=DSBCommandsCOL, title=f"<:dsbbotSuccess:953641647802056756> Point data found!")
             data = db_register_get_data(interaction.user.id)
             quota, rank = get_point_quota(interaction.user, data)
-            if quota:
+            if quota and onLoA(interaction.user) == False:
                 percent = float(points / quota * 100)
                 if percent > 200:
                     qm = "🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟"
@@ -978,7 +1035,62 @@ async def mypoints(interaction: discord.Interaction):
                 else:
                     qm = "⬛⬛⬛⬛⬛⬛⬛⬛⬛⬛"
                 embed.add_field(name=f"{qm} {percent:.1f}% || {points}/{quota}", value="")
-                embed.add_field(name="", value=f"\n\nRank: **{rank}**\nPoints: **{points}**", inline=False)
+                if not data[4]:
+                    embed.add_field(name="", value=f"\n\nRank: **{rank}**\nPoints: **{points}**", inline=False)
+                else:
+                    embed.add_field(name="", value=f"\n\nRank: **{rank}**\nPoints: **{points}**\nDays excused: **{data[4]}d**", inline=False)
+            elif quota and onLoA(interaction.user):
+                percent = float(points / quota * 100)
+                if percent > 200:
+                    qm = "🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟"
+                elif percent >= 200:
+                    qm = ":regional_indicator_l::regional_indicator_o::regional_indicator_a:🟪🟪🟪🟪🟪🟪🟪"
+                elif percent >= 190:
+                    qm = ":regional_indicator_l::regional_indicator_o::regional_indicator_a:🟪🟪🟪🟪🟪🟪🟦"
+                elif percent >= 180:
+                    qm = ":regional_indicator_l::regional_indicator_o::regional_indicator_a:🟪🟪🟪🟪🟪🟦🟦"
+                elif percent >= 170:
+                    qm = ":regional_indicator_l::regional_indicator_o::regional_indicator_a:🟪🟪🟪🟪🟦🟦🟦"
+                elif percent >= 160:
+                    qm = ":regional_indicator_l::regional_indicator_o::regional_indicator_a:🟪🟪🟪🟦🟦🟦🟦"
+                elif percent >= 150:
+                    qm = ":regional_indicator_l::regional_indicator_o::regional_indicator_a:🟪🟪🟦🟦🟦🟦🟦"
+                elif percent >= 140:
+                    qm = ":regional_indicator_l::regional_indicator_o::regional_indicator_a:🟪🟦🟦🟦🟦🟦🟦"
+                elif percent >= 130:
+                    qm = ":regional_indicator_l::regional_indicator_o::regional_indicator_a:🟦🟦🟦🟦🟦🟦🟦"
+                elif percent >= 120:
+                    qm = ":regional_indicator_l::regional_indicator_o::regional_indicator_a:🟦🟦🟦🟦🟦🟦🟦"
+                elif percent >= 110:
+                    qm = ":regional_indicator_l::regional_indicator_o::regional_indicator_a:🟦🟦🟦🟦🟦🟦🟦"
+                elif percent >= 100:
+                    qm = ":regional_indicator_l::regional_indicator_o::regional_indicator_a:🟦🟦🟦🟦🟦🟦🟦"
+                elif percent >= 90:
+                    qm = ":regional_indicator_l::regional_indicator_o::regional_indicator_a:🟦🟦🟦🟦🟦🟦⬛"
+                elif percent >= 80:
+                    qm = ":regional_indicator_l::regional_indicator_o::regional_indicator_a:🟦🟦🟦🟦🟦⬛⬛"
+                elif percent >= 70:
+                    qm = ":regional_indicator_l::regional_indicator_o::regional_indicator_a:🟦🟦🟦🟦⬛⬛⬛"
+                elif percent >= 60:
+                    qm = ":regional_indicator_l::regional_indicator_o::regional_indicator_a:🟦🟦🟦⬛⬛⬛⬛"
+                elif percent >= 50:
+                    qm = ":regional_indicator_l::regional_indicator_o::regional_indicator_a:🟦🟦⬛⬛⬛⬛⬛"
+                elif percent >= 40:
+                    qm = ":regional_indicator_l::regional_indicator_o::regional_indicator_a:🟦⬛⬛⬛⬛⬛⬛"
+                elif percent >= 30:
+                    qm = ":regional_indicator_l::regional_indicator_o::regional_indicator_a:⬛⬛⬛⬛⬛⬛⬛"
+                elif percent >= 20:
+                    qm = ":regional_indicator_l::regional_indicator_o::regional_indicator_a:⬛⬛⬛⬛⬛⬛⬛"
+                elif percent >= 10:
+                    qm = ":regional_indicator_l::regional_indicator_o::regional_indicator_a:⬛⬛⬛⬛⬛⬛⬛"
+                else:
+                    qm = ":regional_indicator_l::regional_indicator_o::regional_indicator_a:⬛⬛⬛⬛⬛⬛⬛"
+                quota = 0
+                embed.add_field(name=f"{qm} {percent:.1f}% || {points}/{quota}", value="")
+                if not data[4]:
+                    embed.add_field(name="", value=f"\n\nRank: **{rank}**\nPoints: **{points}**", inline=False)
+                else:
+                    embed.add_field(name="", value=f"\n\nRank: **{rank}**\nPoints: **{points}**\nDays excused: **{data[4]}d**", inline=False)
             else:
                 embed.add_field(name="", value="")
                 embed.add_field(name="", value=f"Rank: {rank}\nPoints: **{points}**", inline=False)

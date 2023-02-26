@@ -1,13 +1,14 @@
 import asyncio
+import datetime
 import json
+import math
 import os
 import platform
+import random
 import re
+import string
 import sys
 import time
-import random
-import datetime
-import string
 
 import discord
 from colorama import Back, Fore, Style
@@ -27,63 +28,31 @@ def quota_get():
     global blocknumber
     start_date, end_date, blocknumber = get_quota()
 
-async def format_user(user_name):
-    for i in range(len(user_name)):
-        if(user_name[i] != ' '):
-            break
-        else:
-            user_name = user_name[1:]
-            
-    for i in user_name[::-1]:
-        if(i != " "):
-            break
-        else:
-            user_name = user_name[:-1]    
-    return user_name
-    
-
 
 ##### EMBED COLORS ####
 global BasiccommandCOL
-global DSBCommandsCOL
-global HRCommandsCOL
-global ErrorCOL
-global SuccessCOL
-global DarkGreenCOL
 BasiccommandCOL = 0xFFFFFF
+global DSBCommandsCOL
 DSBCommandsCOL = 0x0B0B45
+global HRCommandsCOL
 HRCommandsCOL = 0x000000
+global ErrorCOL
 ErrorCOL = 0xB3202C
+global DarkRedCOL
+DarkRedCOL = 0x8B0000
+global SuccessCOL
 SuccessCOL = 0x4BB543
+global DarkGreenCOL
 DarkGreenCOL = 0x006400
-
+global DSBSeverID
 DSBSeverID = 949470602366976051
+global SupportServerID
 SupportServerID = 953638901677973554
 global watching_command
 watching_command = True
 global lmfao_event
 lmfao_event = True
 
-def get_vc_id(key):
-    data = {
-        "O1": 937473342884179980,
-        "O2": 937473342884179981,
-        "O3": 937473342884179982,
-        "O4": 937473342884179983,
-        "O5": 937473342884179984,
-        "VIP": 937473342884179985,
-        "QE": 992865433059340309,
-        "D1": 949869157552390154,
-        "D2": 949869187168370718,
-        "D3": 949869232663986226,
-        "DE": 950145200087511130,
-        "C1": 949470602366976055,
-        "C2": 949867772643520522,
-        "C3": 949867813789630574,
-        "CE": 950145105040388137,
-        "MAIN": 939964909205192804
-    }
-    return data.get(key, None)
 
 def get_point_quota(user, data=None):
     role_quota = {
@@ -105,16 +74,12 @@ def get_point_quota(user, data=None):
         "QSO Command": (None, "**QSO Command**")
     }
     
-    has_leave_of_absence = False
-    
     for role in user.roles:
-        if role.name == "DSB Leave of Absence":
-            has_leave_of_absence = True
-        elif role.name in role_quota:
+        if role.name in role_quota:
             quota, rank = role_quota[role.name]
             if data and data[4]:
                 quota = int(quota - ((quota/14)*data[4]))
-            return None if has_leave_of_absence else quota, rank
+            return quota, rank
     
     return None, None
 
@@ -190,7 +155,7 @@ def ITMR_A(user): # MR in-training and above
 def DSBMEMBER(user): # check if user has DSB role
     roles = user.roles
     for role in roles:
-        if role.name in ["DSB"] or role.permissions.administrator and role.name not in ["DSB Private"]:
+        if role.name in ["DSB"] and role.name not in ["DSB Private"] or role.permissions.administrator:
             return True
     return False
 
@@ -236,6 +201,77 @@ def get_quota_completion_percentage():
     else:
         return (totalpoints_withoutPC() / total_quota) * 100
 
+def attendance_points(user):
+    roles_ = {
+        "Private First Class": 4,
+        "Corporal": 4,
+        "Junior Defense Specialist": 2,
+        "Sergeant": 2,
+        "Senior Defense Specialist": 2,
+        "Staff Sergeant": 2,
+        "Elite Defense Specialist": 2,
+        "Master Sergeant": 2,
+        "[DSB] Squadron Officer": 2,
+    }
+    
+    for role in user.roles:
+        if role.name in roles_:
+            return roles_[role.name]
+    
+    return None
+
+def co_host_points(user):
+    roles_ = {
+        "Sergeant": 5,
+        "Senior Defense Specialist": 5,
+        "Staff Sergeant": 4,
+        "Elite Defense Specialist": 5,
+        "Master Sergeant": 5,
+        "[DSB] Squadron Officer": 4,
+        "DSB Pre-Command": 1,
+        "DSB Command": 1,
+    }
+    
+    for role in user.roles:
+        if role.name in roles_:
+            return roles_[role.name]
+    
+    return None
+
+def supervisor_points(user):
+    roles_ = {
+        "Elite Defense Specialist": 4,
+        "Master Sergeant": 4,
+        "[DSB] Squadron Officer": 5,
+        "DSB Pre-Command": 1,
+        "DSB Command": 1,
+    }
+    
+    for role in user.roles:
+        if role.name in roles_:
+            return roles_[role.name]
+    
+    return None
+
+def ringleader_points(user):
+    roles_ = {
+        "Sergeant": 7,
+        "Senior Defense Specialist": 7,
+        "Staff Sergeant": 8,
+        "Elite Defense Specialist": 8,
+        "Master Sergeant": 8,
+        "[DSB] Squadron Officer": 8,
+        "DSB Pre-Command": 1,
+        "DSB Command": 1,
+    }
+    
+    for role in user.roles:
+        if role.name in roles_:
+            return roles_[role.name]
+    
+    return None
+
+
 @bot.event
 async def on_message(message):
     if lmfao_event == True and message.author.id != 776226471575683082:
@@ -245,7 +281,7 @@ async def on_message(message):
 @bot.event
 async def on_reaction_add(reaction, user):    
     if str(reaction.emoji) == "<:dsbbotSuccess:953641647802056756>" and reaction.message.channel.id == 983194737882312714 and DSBPC_A(reaction.user):
-        role_name = "On LoA"
+        role_name = "DSB Leave of Absence"
         role = discord.utils.get(reaction.message.guild.roles, name=role_name)
         await reaction.message.author.add_roles(role)
 
@@ -492,7 +528,8 @@ class PointsGrp(app_commands.Group):
 pointsgroup = PointsGrp(name="points")
 bot.tree.add_command(pointsgroup)
 
-class requestButtons(discord.ui.View):
+
+class PatrolrequestButtons(discord.ui.View):
     def __init__(self, amount:int):
         super().__init__()
         self.amount = amount
@@ -506,45 +543,243 @@ class requestButtons(discord.ui.View):
             try:
                 add_points(interaction.message.interaction.user.id, self.amount)
                 embed = interaction.message.embeds[0]
-                embed.title=f"<:dsbbotSuccess:953641647802056756> Point Request - {interaction.message.interaction.user.display_name}"
+                embed.title= embed.title.replace("<:dsbbotUnderReview:953642762857771138>", "<:dsbbotAccept:1073668738827694131>")
                 embed.color=DarkGreenCOL
                 await interaction.message.edit(embed=embed, view=None)
-                embed=discord.Embed(color=SuccessCOL,title="<:dsbbotAccept:1073668738827694131> Point Request Accepted!", description=f"Your point request has been **accepted** and {self.amount} points have been added. You now have **{get_points(interaction.message.interaction.user.id)}** points.  😎")
+                embed=discord.Embed(color=SuccessCOL,title="<:dsbbotAccept:1073668738827694131> Point Request Accepted!", description=f"Your point request has been **accepted** and {self.amount} points have been added. You now have **{get_points(interaction.message.interaction.user.id)}** points. 😎")
                 embed.set_footer(icon_url=interaction.user.avatar, text=f"Reviewed by {interaction.user.display_name} • {datetime.now().strftime('%d.%m.%y at %H:%M')}")
                 await interaction.response.send_message(f"{interaction.message.interaction.user.mention}", embed=embed)
             except Exception as e:
                 await interaction.response.send_message(embed=discord.Embed(title="Failed to proccess request!", description=f"`Error:` {e}"), ephemeral=True)
-                
-    
+
     @discord.ui.button(emoji="<:dsbbotDeny:1073668785262833735>", label="Decline", style=discord.ButtonStyle.grey)
     async def DenyButton(self, interaction:discord.Interaction, button:discord.ui.Button):
         if not DSBPC_A(interaction.user):
             return
         else:
             embed = interaction.message.embeds[0]
-            embed.title=f"<:dsbbotFailed:953641818057216050> Point Request - {interaction.message.interaction.user.display_name}"
-            embed.color=ErrorCOL
+            embed.title= embed.title.replace("<:dsbbotUnderReview:953642762857771138>", "<:dsbbotDeny:1073668785262833735>")
+            embed.color=DarkRedCOL
             await interaction.message.edit(embed=embed, view=None)
-            embed=discord.Embed(color=ErrorCOL, title="<:dsbbotDeny:1073668785262833735> Point Request Denied!", description=f"Your point request has been **denied**. The person who reviewed it will provide you with the reason shortly.  😄")
+            embed=discord.Embed(color=ErrorCOL, title="<:dsbbotDeny:1073668785262833735> Point Request Denied!", description=f"Your point request has been **denied**. The person who reviewed it will provide you with the reason shortly. 😄")
             embed.set_footer(icon_url=interaction.user.avatar, text=f"Reviewed by {interaction.user.display_name} • {datetime.now().strftime('%d.%m.%y at %H:%M')}")
             await interaction.response.send_message(f"{interaction.message.interaction.user.mention}", embed=embed)
-            
+
     @discord.ui.button(emoji="❌", label="Cancel", style=discord.ButtonStyle.grey)
     async def CancelButton(self, interaction:discord.Interaction, button:discord.ui.Button):
         if interaction.user == interaction.message.interaction.user:
             embed = interaction.message.embeds[0]
-            embed.title="<:dsbbotFailed:953641818057216050> Cancelled Point Request!"
-            embed.remove_field(1)
-            embed.remove_field(2)
-            embed.remove_field(3)
+            embed.title="<:dsbbotFailed:953641818057216050> Cancelled __Patrol__ Point Request!"
+            embed.clear_fields()
             embed.set_footer(icon_url=interaction.user.avatar, text=f"Cancelled by {interaction.user.display_name} • {datetime.now().strftime('%d.%m.%y at %H:%M')}")
             embed.color=HRCommandsCOL
             await interaction.message.edit(embed=embed, view=None)
         else:
             return
             
-@pointsgroup.command(name="loa_days", description="Sets the amount of days someone has been on LoA for for that block. [DSBPC+]")
-async def loa_quota(interaction:discord.Interaction, member:discord.Member ,set_amount:int):
+class OperationrequestButtons(discord.ui.View):
+    def __init__(self, points_dict):
+        super().__init__()
+        self.points_dict = points_dict
+        discord.ui.View.timeout = None
+    
+    @discord.ui.button(emoji="<:dsbbotAccept:1073668738827694131>", label="Accept", style=discord.ButtonStyle.grey)
+    async def AcceptButton(self, interaction:discord.Interaction, button:discord.ui.Button):
+        if not DSBPC_A(interaction.user):
+            return
+        else:
+            try:
+                for user_id, amount in self.points_dict.items():
+                    add_points(user_id, amount)
+                embed = interaction.message.embeds[0]
+                embed.title= embed.title.replace("<:dsbbotUnderReview:953642762857771138>", "<:dsbbotAccept:1073668738827694131>")
+                embed.color=DarkGreenCOL
+                await interaction.message.edit(embed=embed, view=None)
+                embed=discord.Embed(color=SuccessCOL,title="<:dsbbotAccept:1073668738827694131> Point Request Accepted!", description=f"The point request for this operation has been **accepted** and all points have been added. 🛡️")
+                embed.set_footer(icon_url=interaction.user.avatar, text=f"Reviewed by {interaction.user.display_name} • {datetime.now().strftime('%d.%m.%y at %H:%M')}")
+                await interaction.response.send_message(f"{interaction.message.interaction.user.mention}", embed=embed)
+            except Exception as e:
+                await interaction.response.send_message(embed=discord.Embed(title="Failed to proccess request!", description=f"`Error:` {e}"), ephemeral=True)
+
+    @discord.ui.button(emoji="<:dsbbotDeny:1073668785262833735>", label="Decline", style=discord.ButtonStyle.grey)
+    async def DenyButton(self, interaction:discord.Interaction, button:discord.ui.Button):
+        if not DSBPC_A(interaction.user):
+            return
+        else:
+            embed = interaction.message.embeds[0]
+            embed.title= embed.title.replace("<:dsbbotUnderReview:953642762857771138>", "<:dsbbotDeny:1073668785262833735>")
+            embed.color=DarkRedCOL
+            await interaction.message.edit(embed=embed, view=None)
+            embed=discord.Embed(color=ErrorCOL, title="<:dsbbotDeny:1073668785262833735> Point Request Denied!", description=f"The point request for this operation has been **denied**. The person who reviewed it will provide the reason shortly. 😄")
+            embed.set_footer(icon_url=interaction.user.avatar, text=f"Reviewed by {interaction.user.display_name} • {datetime.now().strftime('%d.%m.%y at %H:%M')}")
+            await interaction.response.send_message(f"{interaction.message.interaction.user.mention}", embed=embed)
+
+    @discord.ui.button(emoji="❌", label="Cancel", style=discord.ButtonStyle.grey)
+    async def CancelButton(self, interaction:discord.Interaction, button:discord.ui.Button):
+        if interaction.user == interaction.message.interaction.user:
+            embed = interaction.message.embeds[0]
+            embed.title="<:dsbbotFailed:953641818057216050> Cancelled __Operation__ Point Request!"
+            embed.clear_fields()
+            embed.set_footer(icon_url=interaction.user.avatar, text=f"Cancelled by {interaction.user.display_name} • {datetime.now().strftime('%d.%m.%y at %H:%M')}")
+            embed.color=HRCommandsCOL
+            await interaction.message.edit(embed=embed, view=None)
+        else:
+            return
+
+class PointsRequestLogGrp(app_commands.Group):
+    pass
+pointsgroup_request_log = PointsRequestLogGrp(name="request")
+pointsgroup.add_command(pointsgroup_request_log) 
+    
+@pointsgroup_request_log.command(name="patrol", description="Request points for your patrols using this command.")
+@app_commands.describe(log="Message link to .qb findlog message from #bot-commands", length="The length of your patrol in minutes")
+async def request_log(interaction:discord.Interaction, length:int, log:str):
+    if not DSBMEMBER(interaction.user):
+        return await interaction.response.send_message(embed=discord.Embed(color=ErrorCOL, title="<:dsbbotFailed:953641818057216050> Missing permissions!", description=f"Only DSB Private First Class or above may interact with DSB Helper."), ephemeral=True)
+    if not db_register_get_data(interaction.user.id):
+        return await interaction.response.send_message(embed = discord.Embed(title=f"<:dsbbotFailed:953641818057216050> Interaction failed!", description="You were not found in registry database.\n*Use `/db register` to register.*", color=ErrorCOL), ephemeral=True)   
+    message_link_pattern = re.compile(r"https://(?:ptb\.)?discord(?:app)?\.com/channels/(\d+)/(\d+)/(\d+)")
+    if not message_link_pattern.match(log):
+        return await interaction.response.send_message(embed=discord.Embed(color=ErrorCOL, title="<:dsbbotFailed:953641818057216050> Invalid proof!", description=f"You must provide a Discord message link."), ephemeral=True)
+    if length < 30 or length > 541:
+        return await interaction.response.send_message(embed=discord.Embed(color=ErrorCOL, title="<:dsbbotFailed:953641818057216050> Invalid length!", description=f"The length of your patrol must be at least 30 minutes." if length < 30 else "Your patrol should not be over 9hs or 540 minutes..."), ephemeral=True)
+    else:
+        if length <= 60:
+            amount = 2
+        else:
+            amount = 2
+            extra = math.floor((length - 60+7) / 30)
+            print(amount, extra, (length - 60+7) / 30)
+            amount += extra
+    embed = discord.Embed(color=DSBCommandsCOL, title=f"<:dsbbotUnderReview:953642762857771138> __Patrol__ Point Request - {interaction.user.display_name}")
+    embed.add_field(name="", value="")
+    embed.add_field(name="", value=f"**{interaction.user.display_name}** has requested **{amount} points** for patrolling **{length} minutes**.\n\n→ **[Log Message]({log})**", inline=False)
+    await interaction.response.send_message(embed = embed, view=PatrolrequestButtons(amount))
+
+@pointsgroup_request_log.command(name="operation", description="Request points for your operations using this command.")
+@app_commands.describe(operation="Example: `ECHO HH`", ringleader="The host of the operation, normally that would be you.", co_hosts="If anyone co-hosted your operation they would go here.", supervisors="If anyone soupervised your operation, they would go here.", attendees="Your attendance list goes here. Make sure to seperate the mentions using a comma.")
+async def request_op(interaction:discord.Interaction, operation:str, ringleader:discord.Member, supervisors:str=None, co_hosts:str=None, attendees:str=None):
+    if not ITMR_A(interaction.user):
+        return await interaction.response.send_message(embed=discord.Embed(color=ErrorCOL, title="<:dsbbotDeny:1073668785262833735> Missing permissions!", description=f"This command is limited to DSB Sergeant+."), ephemeral=True)
+    if not db_register_get_data(interaction.user.id):
+        return await interaction.response.send_message(embed = discord.Embed(title=f"<:dsbbotFailed:953641818057216050> Interaction failed!", description="You were not found in registry database.\n*Use `/db register` to register.*", color=ErrorCOL), ephemeral=True)   
+    embed = discord.Embed(color=DSBCommandsCOL, title=f"<:dsbbotUnderReview:953642762857771138> __Operation__ Points Request - Operation {operation}")
+    points_dict = {}
+    
+    if co_hosts:
+        cohost_list = []
+        cohosts = co_hosts.split(",")
+        for co_host in cohosts:
+            error_msg = None
+            co_host = co_host.replace(" ", "")
+            if not co_host.startswith("<@") or not co_host.endswith(">"):
+                error_msg = "Co-Host: Invalid format for co-hosts. Format `<@USERID>, <@USERID>`"
+                break
+            co_host_id = int(co_host.replace("<", "").replace("@", "").replace(">", "").replace(" ", ""))
+            if str(co_host_id).__len__() > 18:
+                error_msg = f"`Co-Hosts:` Please separate user mentions with commas."
+                break
+            co_host_member = discord.utils.get(interaction.guild.members, id=co_host_id)
+            if co_host_member is None:
+                error_msg = f"`Co-Hosts:` Could not a find member."
+                break
+            if not db_register_get_data(co_host_member.id):
+                error_msg = f"`Co-Hosts:` {co_host_member.mention} was not found in the database."
+                break
+            if co_host_points(co_host_member) == None:
+                error_msg = f"`Co-Hosts:` {co_host_member.mention} is not DSB MR or above."
+                break
+            if co_host_member.id in points_dict:
+                error_msg = f"`Co-Hosts:` {co_host_member.mention} was mentioned twice."
+                break
+            cohost_list.append(co_host_member)
+            points_dict[co_host_member.id] = co_host_points(co_host_member)
+        if error_msg:
+            return await interaction.response.send_message(embed=discord.Embed(color=ErrorCOL, title="<:dsbbotFailed:953641818057216050> Invalid Input! || Error", description=error_msg), ephemeral=True)
+        cohtxt = ", ".join([f"{cohost.display_name}[{points_dict[cohost.id]}]" for cohost in cohost_list])
+    soup_list = []
+    if supervisors:
+        supervisorss = supervisors.split(",")
+        for supervisor in supervisorss:
+            error_msg = None
+            supervisor_id = int(supervisor.replace("<", "").replace("@", "").replace(">", "").replace(" ", ""))
+            if str(supervisor_id).__len__() > 19:
+                error_msg = f"`Supervisors:` Please separate user mentions with commas."
+                break
+            if supervisor == f"<@{ringleader.id}>":
+                error_msg = "`Supervisors:` You cannot mention the ringleader as a supervisor."
+                break
+            supervisor_member = discord.utils.get(interaction.guild.members, id=supervisor_id)
+            if not supervisor_member:
+                error_msg = "`Supervisors:` Could not find a member."
+                break
+            if not db_register_get_data(supervisor_member.id):
+                error_msg = f"`Supervisors:` {supervisor_member.mention} was not found in the database."
+                break
+            if supervisor_id in points_dict:
+                error_msg = f"`Supervisors:` {supervisor_member.mention} was mentioned twice."
+                break
+            if supervisor_points(supervisor_member) == None:
+                error_msg = f"`Supervisors:` {supervisor_member.mention} is not Sergeant+."
+                break
+            soup_list.append(supervisor_member)
+            points_dict[supervisor_member.id] = supervisor_points(supervisor_member)
+        if error_msg:
+            return await interaction.response.send_message(embed=discord.Embed(color=ErrorCOL, title="<:dsbbotFailed:953641818057216050> Invalid Input! || Error", description=error_msg), ephemeral=True)
+        souptxt = ", ".join([f"{supervisor.display_name}[{supervisor_points(supervisor)}]" for supervisor in soup_list])
+    attendees_list = []
+    if attendees:
+        attendeess = attendees.split(",")
+        for attendee in attendeess:
+            error_msg = None
+            attendee = attendee.replace(" ", "")
+            if attendee == f"<@{ringleader.id}>":
+                error_msg = "Attendees: You cannot mention the ringleader as an attendee."
+                break
+            attendee_id = int(attendee[2:-1])
+            attendee_member = discord.utils.get(interaction.guild.members, id=attendee_id)
+            if not attendee_member:
+                error_msg = f"`Attendees:` Could not find a member with ID {attendee_id}."
+                break
+            if DSBPC_A(attendee_member):
+                error_msg = f"`Attendees:` {attendee_member.mention} is a member of DSBPC or above. You cannot put DSBPC members and above as attendee. 😉"
+                break
+            if not db_register_get_data(attendee_id):
+                error_msg = f"`Attendees:` {attendee_member.mention} was not found in the database."
+                break
+            if attendance_points(attendee_member) == None:
+                error_msg = f"`Attendees:` {attendee_member.mention} is not a valid attendee. No point value found for this rank/person."
+                break
+            attendees_list.append(attendee_member)
+            points_dict[attendee_member.id] = attendance_points(attendee_member)
+        if error_msg:
+            return await interaction.response.send_message(embed=discord.Embed(color=ErrorCOL, title="<:dsbbotFailed:953641818057216050> Invalid Input! || Error", description=error_msg), ephemeral=True)
+        atttxt = ", ".join([f"{attendee.display_name}[{attendance_points(attendee)}]" for attendee in attendees_list])
+    else:
+        if not co_hosts:
+            cohtxt = "Something went wrong..."
+        if not supervisors:
+            souptxt = "Something went wrong..."
+        if not attendees:
+            atttxt = "Something went wrong..."
+    
+    if ringleader:
+        if ITMR_A(ringleader):
+            points_dict[ringleader.id] = ringleader_points(ringleader)
+            print(points_dict)
+            embed.add_field(name="", value=f"`Ringleader:` {ringleader.display_name}[{ringleader_points(ringleader)}]")
+        else:
+            return await interaction.response.send_message(embed=discord.Embed(color=ErrorCOL, title="<:dsbbotDeny:1073668785262833735> Invalid Input", description=f"{ringleader.mention} is not DSB MR or above."))
+    if co_hosts:
+        embed.add_field(name="", value=f"`Co-Host:` {cohtxt}" if cohost_list.__len__() == 1 else f"`Co-Hosts:` {cohtxt}",inline=False)
+    if supervisors:
+        embed.add_field(name="", value=f"`Supervisor:` {souptxt}" if soup_list.__len__() == 1 else f"`Supervisors:` {souptxt}",inline=False)
+    if attendees_list:
+        embed.add_field(name="", value=f"`Attendee:` {atttxt}"if attendees_list.__len__() == 1 else f"`Attendees:` {atttxt}", inline=False)
+    await interaction.response.send_message(embed = embed, view=OperationrequestButtons(points_dict))
+   
+@pointsgroup.command(name="excuse_quota", description="Changes the quota for a user for the current block. [DSBPC+]")
+async def loa_quota(interaction:discord.Interaction, member:discord.Member, set_amount:int):
     if(not DSBPC_A(interaction.user)): # check if user has permission
         embed = discord.Embed(color=ErrorCOL, title="<:dsbbotFailed:953641818057216050> Failed to set days!", description=f"You must be a member of DSBPC or above to use this command.")
         return await interaction.response.send_message(embed=embed, ephemeral=True)
@@ -566,25 +801,6 @@ async def loa_quota(interaction:discord.Interaction, member:discord.Member ,set_
             return await interaction.response.send_message(embed = discord.Embed(color=DSBCommandsCOL, title=f"<:dsbbotFailed:953641818057216050> Failed to set!", description=f"Something went wrong..."), ephemeral=True)
     else:
         return await interaction.response.send_message(embed = discord.Embed(title=f"<:dsbbotFailed:953641818057216050> `{member}` not found!", description="User not found in registry database.", color=ErrorCOL), ephemeral=True)
-  
-
-@pointsgroup.command(name="request", description="Used to request points.")
-async def request(interaction:discord.Interaction, amount:int, log:str):
-    if not DSBMEMBER(interaction.user):
-        return await interaction.response.send_message(embed=discord.Embed(color=ErrorCOL, title="<:dsbbotFailed:953641818057216050> Missing permissions!", description=f"Only DSB Private First Class or above may interact with DSB Helper."), ephemeral=True)
-    if not db_register_get_data(interaction.user.id):
-        return await interaction.response.send_message(embed = discord.Embed(title=f"<:dsbbotFailed:953641818057216050> Interaction failed!", description="You were not found in registry database.\n*Use `/db register` to register.*", color=ErrorCOL), ephemeral=True)   
-    message_link_pattern = re.compile(r"https://(?:ptb\.)?discord(?:app)?\.com/channels/(\d+)/(\d+)/(\d+)")
-    if not message_link_pattern.match(log):
-        return await interaction.response.send_message(embed=discord.Embed(color=ErrorCOL, title="<:dsbbotFailed:953641818057216050> Invalid log!", description=f"Input `log` must be a Discord message link."), ephemeral=True)
-    if not amount >=1:
-        return await interaction.response.send_message(embed=discord.Embed(color=ErrorCOL, title="<:dsbbotFailed:953641818057216050> Invalid amount!", description=f"The requested amount of points must be **greater than 1**."), ephemeral=True)
-    else:
-        embed = discord.Embed(color=DSBCommandsCOL, title=f"<:dsbbotUnderReview:953642762857771138> Point Request - {interaction.user.display_name}")
-        embed.add_field(name="", value="")
-        embed.add_field(name="", value=f"**{interaction.user.display_name}** has requested **{amount}** points.\n\n**`Log:`** {log}", inline=False)
-        await interaction.response.send_message(embed = embed, view=requestButtons(amount))
-
 
 @pointsgroup.command(name="add", description="Adds points to a user. [DSBPC+]")
 async def add(interaction:discord.Interaction, member:discord.Member, amount:int):
@@ -837,7 +1053,7 @@ class overviewButtons(discord.ui.View):
         await interaction.message.edit(embed=embed, view=overviewButtons())
         await interaction.response.defer()
         
-    @discord.ui.button(emoji="<:dsbbotEmpty:1075113389526888608>", style=discord.ButtonStyle.gray, disabled=True)
+    @discord.ui.button(label="||", style=discord.ButtonStyle.gray, disabled=True)
     async def EmptyButton(self, interaction:discord.Interaction, button:discord.ui.Button):
         pass
 
@@ -907,8 +1123,6 @@ class overviewButtons(discord.ui.View):
         await interaction.message.edit(embed=embed, view=overviewButtons())
         await interaction.response.defer()
 
-
-
 @pointsgroup.command(name="overview",description="Shows leaderboard for points.")
 async def overview(interaction: discord.Interaction):
     if not DSBMEMBER(interaction.user):
@@ -974,7 +1188,6 @@ async def reset(interaction:discord.Interaction):
                     embed = discord.Embed(title="<:dsbbotFailed:953641818057216050> Point reset failed!", description=f"Something went wrong...", color=ErrorCOL)
                     tasks = [    msg.clear_reactions(),    interaction.edit_original_response(embed=embed)]
                     await asyncio.gather(*tasks)
-
 
 @bot.tree.command(name="mypoints",description="View your point count.")
 async def mypoints(interaction: discord.Interaction):

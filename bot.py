@@ -1017,7 +1017,8 @@ class overviewButtons(discord.ui.View):
                 embed.add_field(name = "", value = f"**{user}**\nPoints: " + '{:,}'.format(int(row[3])), inline=False)
                 last_user_count += 1
         if not has_points:
-            embed.add_field(name="", value="***No point data over `0` found in `rows`.***")
+            embed.add_field(name="", value="")
+            embed.add_field(name="", value="*No point data found, it seems no one currently has any points.*")
         update_leaderboard(page, last_user_count, interaction.message.id)
         page_u, last_user_count_u = get_leaderboard_page(interaction.message.id)
         embed.set_footer(text=f"Page {page_u}")
@@ -1159,7 +1160,7 @@ async def overview(interaction: discord.Interaction):
 @pointsgroup.command(name="reset",description="Resets the points of all users to zero. [DSBPC+]")
 async def reset(interaction:discord.Interaction):
     if not DSBPC_A(interaction.user):
-        return await interaction.response.send_message(embed=discord.Embed(title=f"<:dsbbotFailed:953641818057216050> Failed to reset points!", description="You must be a member of DSBCOMM or above to reset the points.", color=ErrorCOL))
+        return await interaction.response.send_message(embed=discord.Embed(title=f"<:dsbbotFailed:953641818057216050> Failed to reset points!", description="You must be a member of DSBPC or above to reset the points.", color=ErrorCOL))
     else:
         await interaction.response.send_message(embed=discord.Embed(description="<:dsbbotUnderReview:1067970676041982053> Waiting for response..."))
         embed = discord.Embed(color=HRCommandsCOL, description=f"<:dsbbotUnderReview:1067970676041982053> **Are you sure you want to reset the points?**\nReact with <:dsbbotApproved:953642750039953418> to confirm.", colour=ErrorCOL)

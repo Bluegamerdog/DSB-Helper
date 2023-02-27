@@ -160,7 +160,7 @@ def DSBMEMBER(user): # check if user has DSB role
     return False
 
 def DEVACCESS(user):
-    allowed_ids = [776226471575683082, 395505414000607237, 1053377038490292264] # Blue, Orange and Shush
+    allowed_ids = [776226471575683082, 395505414000607237] # Blue and Orange
     if user.id in allowed_ids or user.guild_permissions.administrator:
         return True
     return False

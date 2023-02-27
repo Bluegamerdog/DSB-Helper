@@ -205,7 +205,7 @@ def attendance_points(user):
     roles_ = {
         "Private First Class": 4,
         "Corporal": 4,
-        "Junior Defense Specialist": 2,
+        "Junior Defense Specialist": 4,
         "Sergeant": 2,
         "Senior Defense Specialist": 2,
         "Staff Sergeant": 2,

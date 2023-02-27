@@ -1178,7 +1178,7 @@ async def reset(interaction:discord.Interaction):
             await asyncio.gather(*tasks)
 
         else:
-            if DSBCOMM_A(user_r):
+            if DSBPC_A(user_r):
                 success = await reset_points()
                 print(success)
                 if success:

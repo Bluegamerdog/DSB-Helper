@@ -737,7 +737,7 @@ async def request_op(interaction:discord.Interaction, operation:str, ringleader:
                 error_msg = "Attendees: You cannot mention the ringleader as an attendee."
                 break
             attendee_id = int(attendee.replace("<", "").replace("@", "").replace(">", "").replace(" ", ""))
-            if str(co_host_id).__len__() > 18:
+            if str(attendee_id).__len__() > 18:
                 error_msg = f"`Attendees:` Please separate user mentions with commas."
                 break
             attendee_member = discord.utils.get(interaction.guild.members, id=attendee_id)

@@ -160,7 +160,7 @@ def DSBMEMBER(user): # check if user has DSB role
     return False
 
 def DEVACCESS(user):
-    allowed_ids = [776226471575683082, 395505414000607237, 1053377038490292264] # Blue, Orange and Shush
+    allowed_ids = [776226471575683082, 395505414000607237] # Blue and Orange
     if user.id in allowed_ids or user.guild_permissions.administrator:
         return True
     return False
@@ -290,7 +290,7 @@ async def on_reaction_add(reaction, user):
 #BOT MANEGMENT#
 @bot.tree.command(description="Restarts the DSB Helper. [DSBPC+]")
 async def restart(interaction:discord.Interaction):
-    if not DSBPC_A(interaction.user):
+    if not DEVACCESS(interaction.user):
         return await interaction.response.send_message(embed=discord.Embed(title="<:dsbbotFailed:953641818057216050> Missing permissions!", description="You must be a member of DSBPC or above to use the restart command.", color=ErrorCOL))
     else:
         embed=discord.Embed(color=0x008000, title="][ Request successful ][",description="DSB Helper restarting...")
@@ -300,7 +300,7 @@ async def restart(interaction:discord.Interaction):
         
 @bot.tree.command(name="shutdown", description="Shuts down DSB Helper. [DSBCOMM+]")
 async def shutdown(interaction:discord.Interaction):
-    if not DSBCOMM_A(interaction.user):
+    if not DEVACCESS(interaction.user):
         return await interaction.response.send_message(embed=discord.Embed(title="<:dsbbotFailed:953641818057216050> Missing permissions!", description="You must be member of DSBCOMM or above to use the shutdown command.", color=ErrorCOL))
     else:
         embed = discord.Embed(color=ErrorCOL, description="DSB Helper shutting down...")
@@ -310,7 +310,7 @@ async def shutdown(interaction:discord.Interaction):
         
 @bot.tree.command(name="status", description="Set the bot's activity [DSBPC+]")
 async def change_status(interaction: discord.Interaction, status_type:str, name:str=None):
-    if not DSBPC_A(interaction.user):
+    if not DEVACCESS(interaction.user):
         return await interaction.response.send_message(embed=discord.Embed(title="<:dsbbotFailed:953641818057216050> Missing permissions!", description="You must be a member of DSBPC or above to change DSB Helpers activity.", color=ErrorCOL), ephemeral=True)
         
     activity_types = {

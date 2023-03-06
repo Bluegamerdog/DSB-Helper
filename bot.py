@@ -152,12 +152,13 @@ def ITMR_A(user): # MR in-training and above
             return True
     return False
 
-def DSBMEMBER(user): # check if user has DSB role
+def DSBMEMBER(user):
     roles = user.roles
     for role in roles:
-        if role.name in ["DSB"] and role.name not in ["DSB Private"] or role.permissions.administrator:
+        if role.name == "DSB" and "DSB Private" not in [r.name for r in roles] or role.permissions.administrator:
             return True
     return False
+
 
 def DEVACCESS(user):
     allowed_ids = [776226471575683082, 395505414000607237] # Blue and Orange

@@ -677,7 +677,7 @@ async def request_op(interaction:discord.Interaction, operation:str, ringleader:
                 error_msg = "Co-Host: Invalid format for co-hosts. Format `<@USERID>, <@USERID>`"
                 break
             co_host_id = int(co_host.replace("<", "").replace("@", "").replace(">", "").replace(" ", ""))
-            if str(co_host_id).__len__() > 18:
+            if str(co_host_id).__len__() > 20:
                 error_msg = f"`Co-Hosts:` Please separate user mentions with commas."
                 break
             co_host_member = discord.utils.get(interaction.guild.members, id=co_host_id)
@@ -704,7 +704,7 @@ async def request_op(interaction:discord.Interaction, operation:str, ringleader:
         for supervisor in supervisorss:
             error_msg = None
             supervisor_id = int(supervisor.replace("<", "").replace("@", "").replace(">", "").replace(" ", ""))
-            if str(supervisor_id).__len__() > 19:
+            if str(supervisor_id).__len__() > 20:
                 error_msg = f"`Supervisors:` Please separate user mentions with commas."
                 break
             if supervisor == f"<@{ringleader.id}>":
@@ -738,7 +738,7 @@ async def request_op(interaction:discord.Interaction, operation:str, ringleader:
                 error_msg = "Attendees: You cannot mention the ringleader as an attendee."
                 break
             attendee_id = int(attendee.replace("<", "").replace("@", "").replace(">", "").replace(" ", ""))
-            if str(attendee_id).__len__() > 18:
+            if str(attendee_id).__len__() > 20:
                 error_msg = f"`Attendees:` Please separate user mentions with commas."
                 break
             attendee_member = discord.utils.get(interaction.guild.members, id=attendee_id)

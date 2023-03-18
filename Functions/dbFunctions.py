@@ -7,6 +7,13 @@ def get_conn():
     cur = conn.cursor()
     return conn, cur
 
+def replace_value(table, column, old_value, new_value):
+    conn, cur = get_conn()
+    cur.execute(f"UPDATE {table} SET {column} = ? WHERE {column} = ?", (new_value, old_value))
+    conn.commit()
+    print(f"Replaced {old_value} with {new_value} in column {column} of {table}")
+
+
 def check_user(username_id):
     t = (username_id, )
     conn, cur = get_conn()
@@ -16,7 +23,6 @@ def check_user(username_id):
         return False
     else:
         return True
-
 
 ## REGISTRY ##
 def db_register_new(username, user_id, profile_link):
@@ -64,6 +70,12 @@ def db_register_remove_user(user_id):
         conn.commit()
         return True
 
+def db_get_all_data():
+    conn, cur = get_conn()
+    cur.execute("SELECT * FROM users")
+    rows = cur.fetchall()
+    return rows
+
 def db_register_get_data(user_id):
     conn, cur = get_conn()
     t = (user_id,)
@@ -74,12 +86,6 @@ def db_register_get_data(user_id):
     else:
         return user_data
 
-def db_get_all_data():
-    conn, cur = get_conn()
-    cur.execute("SELECT * FROM users")
-    rows = cur.fetchall()
-    return rows
-
 def db_register_purge():
     conn, cur = get_conn()
     result = cur.execute("DELETE FROM users")
@@ -88,8 +94,6 @@ def db_register_purge():
         return True, result
     else:
         return False, result
-
-
 
 
 ## POINTS ##
@@ -135,6 +139,13 @@ def get_users_amount(page = 1):
     rows = cur.fetchall()
     return rows
 
+def get_total_points():
+    conn, cur = get_conn()
+    cur.execute("SELECT SUM(points) FROM users")
+    total_points = cur.fetchone()[0]
+    return total_points
+
+
 async def reset_points():
     conn, cur = get_conn()
     try:
@@ -159,7 +170,6 @@ def set_days_onloa(user_id, days):
         return True
     else:
         return False
-
 
 ## LEADERBOARD ##
 def add_leaderboard(username, message_id, count):
@@ -221,5 +231,73 @@ def get_roblox_link(user_id):
         return result[2]
     else:
         return None
+    
+def op_create_scheduled(op_type, op_pal, op_start, op_trello, op_message_id):
+    conn, cur = get_conn()
+    t = (op_type, op_pal, op_start, op_trello, 0, 0, op_message_id, )
+    cur.execute("INSERT INTO op_table (OP_TYPE, OP_PAL, OP_START, OP_TRELLO, OP_SPON, OP_CONCLU, OP_MESSAGE_ID) VALUES (?,?,?,?,?,?,?)", t)
+    conn.commit()
+    print("Operation created successfully.")
 
-# later
+def op_get_info(op_pal):
+    conn, cur = get_conn()
+    t = (op_pal,)
+    cur.execute("SELECT * FROM op_table WHERE OP_PAL=?", t)
+    result = cur.fetchone()
+    if result is None:
+        print("Cannot find operation.")
+        return
+    return result
+
+def op_create_spontaneous(op_type, op_pal, op_message_id, op_trello=None):
+    conn, cur = get_conn()
+    op_start = int(time.time())
+    if op_trello==None:
+        op_trello = "TBA"
+    t = (op_type, op_pal, op_start, op_trello, 1, 0, op_message_id, )
+    cur.execute("INSERT INTO op_table (OP_TYPE, OP_PAL, OP_START, OP_TRELLO, OP_SPON, OP_CONCLU, OP_MESSAGE_ID) VALUES (?,?,?,?,?,?,?)", t)
+    conn.commit()
+    print("Operation created successfully.")
+
+def op_cancel(op_pal):
+    conn, cur = get_conn()
+    t = (op_pal,)
+    cur.execute("DELETE FROM op_table WHERE OP_PAL=?", t)
+    conn.commit()
+    return True
+
+def op_conclude(op_pal):
+    conn, cur = get_conn()
+    t = (op_pal,)
+    cur.execute("UPDATE op_table SET OP_CONCLU=1 WHERE OP_PAL=?", t)
+    rows_affected = cur.rowcount
+    conn.commit()
+    if rows_affected == 0:
+        return False
+    else:
+        return True
+
+def op_edit(op_pal, op_type=None, op_start=None, op_trello=None):
+    conn, cur = get_conn()
+    updates = []
+    if op_type is not None:
+        updates.append("OP_TYPE=?")
+    if op_start is not None:
+        updates.append("OP_START=?")
+    if op_trello is not None:
+        updates.append("OP_TRELLO=?")
+
+    if updates:
+        t = (op_pal,) + tuple(
+            value for value in (op_type, op_start, op_trello) if value is not None
+        )
+        query = f"UPDATE op_table SET {','.join(updates)} WHERE OP_PAL=?"
+        cur.execute(query, t)
+        conn.commit()
+        print("Operation edited successfully.")
+    else:
+        print("Cannot find operation")
+
+    
+    
+

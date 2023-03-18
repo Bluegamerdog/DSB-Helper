@@ -117,9 +117,7 @@ class ManagementCmds(commands.Cog):
                     return await interaction.response.send_message(embed=discord.Embed(title="<:dsbbotFailed:953641818057216050> Rank Error!", description="You can only promote Staff Sergeants+ to Operation Ringleader.", color=ErrorCOL), ephemeral=True)
                 
             userrank = getrank(user)
-            print(userrank)
             newrank = changerank(rank.value)
-            print(newrank)
             if userrank[1] >= 252 or userrank==None:
                 return await interaction.response.send_message(embed=discord.Embed(title="<:dsbbotFailed:953641818057216050> Unable!", description="I cannot rank members of DSB Pre-Command and above.", color=ErrorCOL), ephemeral=True)
             else:

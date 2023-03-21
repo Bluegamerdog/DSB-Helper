@@ -94,8 +94,8 @@ class ManagementCmds(commands.Cog):
     app_commands.Choice(name="Private First Class", value="PFC"),
     app_commands.Choice(name="Corporal", value="Crp"),
     app_commands.Choice(name="Sergeant", value="Sgt"),
+    app_commands.Choice(name="Supervised Staff Sergeant", value="SvSSgt"),
     app_commands.Choice(name="Staff Sergeant", value="SSgt"),
-    app_commands.Choice(name="Operation Ringleader", value="OR"),
     app_commands.Choice(name="Sergeant Major", value="SMaj"),
     app_commands.Choice(name="Chief Sergeant", value="CSgt"),])
     async def rank_cmd(self, interaction:discord.Interaction, user:discord.Member, rank:app_commands.Choice[str]):
@@ -104,22 +104,22 @@ class ManagementCmds(commands.Cog):
         elif not DSBROLE(user):
             return await interaction.response.send_message(embed=discord.Embed(title="<:dsbbotDeny:1073668785262833735> Denied!", description="You can only rank DSB members.", color=ErrorCOL), ephemeral=True)
         else:
-            if rank.value=="OR":
-                data = db_register_get_data(user.id)
-                userrank = getrank(user)
-                if userrank[1] >= 18:
-                    newrank_role = discord.utils.get(interaction.guild.roles, name="Operation Ringleader")
+            userrank = getrank(user)
+            if rank.value=="SSgt" and userrank[1] <=18:
+                if userrank[1] == 18:
+                    oldrank_role = discord.utils.get(interaction.guild.roles, name="Supervised Staff Sergeant")
+                    newrank_role = discord.utils.get(interaction.guild.roles, name="Staff Sergeant")
+                    await user.edit(nick=change_nickname("Staff Sergeant", user.display_name))
                     await user.add_roles(newrank_role)
+                    await user.remove_roles(oldrank_role)
                     embed = discord.Embed(title="<:dsbbotSuccess:953641647802056756> Congrats!", description=f"You can now host your own operations, without the need for supervision! <a:dsbbotCelebration:1084176617993162762>", color=SuccessCOL)
                     embed.set_footer(icon_url=interaction.user.avatar, text=f"Processed by {interaction.user.display_name}  •  {datetime.datetime.now().strftime('%d.%m.%y')}")
                     return await interaction.response.send_message(content=f"{user.mention}", embed=embed)
                 else:
-                    return await interaction.response.send_message(embed=discord.Embed(title="<:dsbbotFailed:953641818057216050> Rank Error!", description="You can only promote Staff Sergeants+ to Operation Ringleader.", color=ErrorCOL), ephemeral=True)
+                    return await interaction.response.send_message(embed=discord.Embed(title="<:dsbbotFailed:953641818057216050> Rank Error!", description="You can only promote **Supervised Staff Sergeants** to **Staff Sergeant**.", color=ErrorCOL), ephemeral=True)
                 
             userrank = getrank(user)
-            print(userrank)
             newrank = changerank(rank.value)
-            print(newrank)
             if userrank[1] >= 252 or userrank==None:
                 return await interaction.response.send_message(embed=discord.Embed(title="<:dsbbotFailed:953641818057216050> Unable!", description="I cannot rank members of DSB Pre-Command and above.", color=ErrorCOL), ephemeral=True)
             else:
@@ -137,9 +137,12 @@ class ManagementCmds(commands.Cog):
                         await group.get_member(get_user_id_from_link(data[2])).set_rank(newrank[1])
                         await user.add_roles(newrank_role) 
                         await user.remove_roles(userrank_role)
-                        if newrank[1] >= 16 and userrank[1] < 16:
+                        if newrank[1] >= 18 and userrank[1] < 18:
                             mr_role = discord.utils.get(interaction.guild.roles, name="Operation Ringleader")
                             await user.add_roles(mr_role)
+                        if newrank[1] >= 20 and userrank[1] < 20:
+                            soup_role = discord.utils.get(interaction.guild.roles, name="Operation Supervisor")
+                            await user.add_roles(soup_role)
                         embed = discord.Embed(title="<:dsbbotSuccess:953641647802056756> Promotion!", description=f"You have been promoted from **{userrank[0]}** to **{newrank[0]}**! <a:dsbbotCelebration:1084176617993162762>", color=SuccessCOL)
                         embed.set_footer(icon_url=interaction.user.avatar, text=f"Processed by {interaction.user.display_name}  •  {datetime.datetime.now().strftime('%d.%m.%y')}")
                         return await interaction.response.send_message(content=f"{user.mention}", embed=embed)
@@ -162,6 +165,9 @@ class ManagementCmds(commands.Cog):
                         if userrank[1] >= 16 and newrank[1] <16:
                             mr_role = discord.utils.get(interaction.guild.roles, name="Operation Ringleader")
                             await user.remove_roles(mr_role)
+                        if userrank[1] >= 20 and newrank[1] < 20:
+                            soup_role = discord.utils.get(interaction.guild.roles, name="Operation Supervisor")
+                            await user.remove_roles(soup_role)
                         embed = discord.Embed(title="<:dsbbotCaution:1067970676041982053> Demotion!", description=f"You have been demoted from **{userrank[0]}** to **{newrank[0]}**.", color=ErrorCOL)
                         embed.set_footer(icon_url=interaction.user.avatar, text=f"Processed by {interaction.user.display_name}  •  {datetime.datetime.now().strftime('%d.%m.%y')}")
                         return await interaction.response.send_message(content=f"{user.mention}", embed=embed)

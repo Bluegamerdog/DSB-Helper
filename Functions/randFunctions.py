@@ -71,6 +71,7 @@ def attendance_points(user):
         "Private First Class": 4,
         "Corporal": 4,
         "Sergeant": 4,
+        "Supervised Staff Sergeant": 2,
         "Staff Sergeant": 2,
         "Sergeant Major": 2,
         "Chief Sergeant": 2,
@@ -84,10 +85,10 @@ def attendance_points(user):
 
 def co_host_points(user):
     roles_ = {
-        "Sergeant": 5,
-        "Staff Sergeant": 5,
-        "Sergeant Major": 5,
-        "Chief Sergeant": 4,
+        "Supervised Staff Sergeant": 5,
+        "Staff Sergeant": 4,
+        "Sergeant Major": 6,
+        "Chief Sergeant": 6,
         "DSB Pre-Command": 1,
         "DSB Command": 1,
     }
@@ -100,8 +101,8 @@ def co_host_points(user):
 
 def supervisor_points(user):
     roles_ = {
-        "Sergeant Major": 4,
-        "Chief Sergeant": 5,
+        "Sergeant Major": 5,
+        "Chief Sergeant": 6,
         "DSB Pre-Command": 1,
         "DSB Command": 1,
     }
@@ -114,10 +115,10 @@ def supervisor_points(user):
 
 def ringleader_points(user):
     roles_ = {
-        "Sergeant": 7,
+        "Supervised Staff Sergeant": 7,
         "Staff Sergeant": 8,
         "Sergeant Major": 8,
-        "Chief Sergeant": 8,
+        "Chief Sergeant": 7,
         "DSB Pre-Command": 1,
         "DSB Command": 1,
     }
@@ -186,6 +187,7 @@ def getrank(user):
         "Private First Class": ("Private First Class", 4),
         "Corporal": ("Corporal", 6),
         "Sergeant": ("Sergeant", 16),
+        "Supervised Staff Sergeant": ("Supervised Staff Sergeant", 18),
         "Staff Sergeant": ("Staff Sergeant", 18),
         "Sergeant Major": ("Sergeant Major", 20),
         "Chief Sergeant": ("Chief Sergeant", 25),
@@ -203,10 +205,11 @@ def getrank(user):
 
 def changerank(rank):
     ranks_ = {
-        "Prv": ("DSB Private", 1),
+        "Pvt": ("DSB Private", 1),
         "PFC": ("Private First Class", 4),
         "Crp": ("Corporal", 6),
         "Sgt": ("Sergeant", 10),
+        "SvSSgt": ("Supervised Staff Sergeant", 18),
         "SSgt": ("Staff Sergeant", 18),
         "SMaj": ("Sergeant Major", 20),
         "CSgt": ("Chief Sergeant", 25),
@@ -220,14 +223,15 @@ def changerank(rank):
 
 def change_nickname(rank_name, prev_nickname):
     rank_abbreviations = {
-        "DSB Private": "PRV",
+        "DSB Private": "Pvt",
         "Private First Class": "PFC",
         "Corporal": "Crp",
         "Sergeant": "Sgt",
+        "Supervised Staff Sergeant":"SvSSgt",
         "Staff Sergeant": "SSgt",
         "Sergeant Major": "SMaj",
         "Chief Sergeant": "CSgt",
-        "Major":"DSBMaj/",
+        "Major":"DSBMAJ/",
         "Colonel":"Col",
         "Lieutenant": "Ltn",
         "DSB Captain": "Capt",

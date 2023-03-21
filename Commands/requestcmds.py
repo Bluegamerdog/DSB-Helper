@@ -49,9 +49,9 @@ class PatrolrequestButtons(discord.ui.View):
     async def CancelButton(self, interaction:discord.Interaction, button:discord.ui.Button):
         if interaction.user == interaction.message.interaction.user:
             embed = interaction.message.embeds[0]
-            embed.title="<:dsbbotFailed:953641818057216050> Cancelled __Patrol__ Point Request!"
+            embed.title="<:dsbbotFailed:953641818057216050> Cancelled Patrol Point Request!"
             embed.clear_fields()
-            embed.set_footer(icon_url=interaction.user.avatar, text=f"Cancelled by {interaction.user.display_name} • {datetime.now().strftime('%d.%m.%y at %H:%M')}")
+            embed.set_footer(text=f"Cancelled by {interaction.user.display_name} • {datetime.now().strftime('%d.%m.%y at %H:%M')}")
             embed.color=HRCommandsCOL
             await interaction.message.edit(embed=embed, view=None)
         else:
@@ -98,9 +98,9 @@ class OperationrequestButtons(discord.ui.View):
     async def CancelButton(self, interaction:discord.Interaction, button:discord.ui.Button):
         if interaction.user == interaction.message.interaction.user:
             embed = interaction.message.embeds[0]
-            embed.title="<:dsbbotFailed:953641818057216050> Cancelled __Operation__ Point Request!"
+            embed.title="<:dsbbotFailed:953641818057216050> Cancelled Operation Point Request!"
             embed.clear_fields()
-            embed.set_footer(icon_url=interaction.user.avatar, text=f"Cancelled by {interaction.user.display_name} • {datetime.now().strftime('%d.%m.%y at %H:%M')}")
+            embed.set_footer(text=f"Cancelled by {interaction.user.display_name} • {datetime.now().strftime('%d.%m.%y at %H:%M')}")
             embed.color=HRCommandsCOL
             await interaction.message.edit(embed=embed, view=None)
         else:
@@ -308,7 +308,7 @@ class RequestCmds(commands.GroupCog, group_name='request'):
                     error_msg = f"`Co-Hosts:` {co_host_member.mention} was not found in the database."
                     break
                 if co_host_points(co_host_member) == None:
-                    error_msg = f"`Co-Hosts:` {co_host_member.mention} is not DSB MR or above."
+                    error_msg = f"`Co-Hosts:` {co_host_member.mention} is not a Supervised Staff Sergeant or above."
                     break
                 if co_host_member.id in points_dict:
                     error_msg = f"`Co-Hosts:` {co_host_member.mention} was mentioned twice."
@@ -341,7 +341,7 @@ class RequestCmds(commands.GroupCog, group_name='request'):
                     error_msg = f"`Supervisors:` {supervisor_member.mention} was mentioned twice."
                     break
                 if supervisor_points(supervisor_member) == None:
-                    error_msg = f"`Supervisors:` {supervisor_member.mention} is not Sergeant+."
+                    error_msg = f"`Supervisors:` {supervisor_member.mention} is not an Sergeant Major or above."
                     break
                 soup_list.append(supervisor_member)
                 points_dict[supervisor_member.id] = supervisor_points(supervisor_member)
@@ -366,7 +366,7 @@ class RequestCmds(commands.GroupCog, group_name='request'):
                     error_msg = f"`Attendees:` Could not find a member with ID {attendee_id}."
                     break
                 if DSBPC_A(attendee_member):
-                    error_msg = f"`Attendees:` {attendee_member.mention} is a member of DSBPC or above. You cannot put DSBPC members and above as attendee. 😉"
+                    error_msg = f"`Attendees:` {attendee_member.mention} is a member of DSB leadership. You cannot put members of DSB leadership and above as attendees. 😉"
                     break
                 if not db_register_get_data(attendee_id):
                     error_msg = f"`Attendees:` {attendee_member.mention} was not found in the database."

@@ -6,7 +6,7 @@ import random
 from Functions.mainVariables import *
 from Functions.permFunctions import *
 from Functions.dbFunctions import (update_quota, replace_value, db_register_get_data)
-from Functions.randFunctions import (quota_get, get_quota, getrank, changerank, change_nickname, get_user_id_from_link)
+from Functions.randFunctions import (quota_get, get_quota, getrank, changerank, change_nickname, get_user_id_from_link, get_point_quota, set_days_onloa)
 from discord.ext import commands
 from discord import app_commands
 from discord import ui
@@ -177,8 +177,57 @@ class ManagementCmds(commands.Cog):
                         return await interaction.response.send_message(embed=embed, ephemeral=True)
                 else:
                     print("Something was missed...")
-            
+    #Welcome command
+    @app_commands.command(name="welcome", description="Used to induct new DSB members once they've joined the server.")
+    async def welcome_pvt(self, interaction:discord.Interaction, member:discord.Member):
+        if not DSBPC_A(interaction.user):
+            return await interaction.response.send_message(embed=discord.Embed(color=ErrorCOL, title="<:dsbbotDeny:1073668785262833735> Missing Permission!", description=f"You must be a member of DSBPC or above to use this command."), ephemeral=True)
+        DSBPvt = discord.utils.get(interaction.guild.roles, name="DSB Private")
+        DSBRole = discord.utils.get(interaction.guild.roles, name="DSB")
+        ServerAccessRole = discord.utils.get(interaction.guild.roles, name="Server Access")
+        channel = await self.bot.fetch_channel(949869101537439744) # Channel ID (currently: #dsb-on-duty)
+        await member.add_roles(DSBPvt, DSBRole, ServerAccessRole)
+        await channel.send(f"DSB, please welcome {member.mention}!")
+        await member.send(embed=discord.Embed(color=DSBCommandsCOL, title=f"Welcome to Defensive Squadron Bravo {member.name}!", description=f"Alrighty...you should now have your roles...\n\nHello and welcome to QSO's Defensive Squadron Bravo. I am DSB Helper and as my name already suggests, I help manage this squadron.\n\nFirst things first, please update to your nickname to include `DSB Pvt` as your rank tag and your Roblox username. Additionally please add the `| DSB` suffix to your name in main QSO, you'll receive the DSB role once you pass your private phase. The DSB Private phase, in short, is our version of the OiT phase from main QSO, with a couple of amendments. You can find more information about the Private phase in <#960601856298602617> and an end date for said Private phase will be given to you as soon as possible.\n\nNext, please read through  <#954443926264217701>, <#957983615315222529>, <#957789241813917766> and all the other miscellaneous infoboards. I should also note that while in DSB, you are to never speak ill of other squadrons or display an form of squadron elitism or egotism. If found to be participating in these actions, you will be swiftly removed without warning.\n\nAnd on that note, DSB Management wishes you the best of luck on your Private phase, and we hope to see you excel as a defensive operative.\n\n<:DSB:1060271947725930496> *In the face of danger, we stand our ground!* <:DSB:1060271947725930496>"))
+        await interaction.response.send_message(embed=discord.Embed(color=DSBCommandsCOL, title=f"<:dsbbotSuccess:953641647802056756> Success!",description=f"{member.name} should now have their roles and should have received the welcome message :D"), ephemeral=True)
     
+    @app_commands.command(name="accept", description="Used to accept new DSB members into the roblox group.")
+    async def accept_pvt(self, interaction:discord.Interaction, member:discord.Member):
+        if not DSBPC_A(interaction.user):
+            return await interaction.response.send_message(embed=discord.Embed(color=ErrorCOL, title="<:dsbbotDeny:1073668785262833735> Missing Permission!", description=f"You must be a member of DSBPC or above to use this command."), ephemeral=True)
+        return await interaction.response.send_message(embed=discord.Embed(color=ErrorCOL, title="<:dsbbotFailed:953641818057216050> Missing Permission!", description=f"This command is currently disabled as we wait for Aera to update the roblox group."), ephemeral=True)      
+
+    @app_commands.command(name="excuse", description="Changes the quota for a user for the current block. [DSBPC+]")
+    @app_commands.describe(member="The operative you're excusing.", days="The amount of days the operative is being excused for. Cannot be more than 14 days.")
+    async def loa_quota(self, interaction:discord.Interaction, member:discord.Member, days:int):
+        if(not DSBPC_A(interaction.user)): # check if user has permission
+            embed = discord.Embed(color=ErrorCOL, title="<:dsbbotDeny:1073668785262833735> Missing Permission!", description=f"You must be a member of DSBPC or above to use this command.")
+            return await interaction.response.send_message(embed=embed, ephemeral=True)
+        if days > 14:
+            return await interaction.response.send_message(embed=discord.Embed(title="<:dsbbotFailed:953641818057216050> Failed to set days!", description=f"You cannot excuse for more than 14 days."), ephemeral=True)
+        if DSBPC_A(member):
+            return await interaction.response.send_message(embed=discord.Embed(title="<:dsbbotFailed:953641818057216050> No quota found!", description=f"DSB Pre-Command and above have no quota to be excused from."), ephemeral=True)
+        data = db_register_get_data(member.id)
+        if data:
+            quota, rank = get_point_quota(member)
+            if quota == None:
+                return await interaction.response.send_message(embed=discord.Embed(title="<:dsbbotFailed:953641818057216050> No quota found!", description=f"No quota was found for this operative."), ephemeral=True)
+            if data[4]:
+                quota_new = int(quota - ((quota/14)*data[4]))
+            if set_days_onloa(member.id, days):
+                updata = db_register_get_data(member.id)
+                if updata[4] is not None:
+                    quota_new = int(quota - ((quota/14)*updata[4]))
+                else:
+                    quota_new = quota
+                start_date, end_date, blocknumber = get_quota()
+                return await interaction.response.send_message(f"{member.mention}", embed = discord.Embed(color=DSBCommandsCOL, title=f"<:dsbbotSuccess:953641647802056756> Default quota set for {member.display_name}!" if days == 0 else f"<:dsbbotSuccess:953641647802056756> New quota for {member.display_name}!", description=f'New quota: **{quota_new} Points** <t:{end_date}:R>\nDays excused: **{updata[4]}**' if updata[4] == None else f'New quota: **{quota_new} Points** <t:{end_date}:R>\nDays excused: **{updata[4]} days**'))
+            else:
+                return await interaction.response.send_message(embed = discord.Embed(color=DSBCommandsCOL, title=f"<:dsbbotFailed:953641818057216050> Failed to set!", description=f"Something went wrong..."), ephemeral=True)
+        else:
+            return await interaction.response.send_message(embed = discord.Embed(title=f"<:dsbbotFailed:953641818057216050> User not found!", description=f"{member.display_name} was not found in registry database.", color=ErrorCOL), ephemeral=True)
+    
+
     #MISC MANEGMENT# 
     @app_commands.command(name="watching", description=":lo:")
     async def watching(self, interaction: discord.Interaction, user:discord.Member=None):

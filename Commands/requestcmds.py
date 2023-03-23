@@ -7,7 +7,7 @@ from discord import ui
 from Functions.dbFunctions import *
 from Functions.mainVariables import *
 from Functions.permFunctions import *
-from Functions.randFunctions import (attendance_points, co_host_points, supervisor_points, ringleader_points, getrank, get_quota)
+from Functions.randFunctions import (get_point_quota, attendance_points, co_host_points, supervisor_points, ringleader_points, getrank, get_quota)
 
 class PatrolrequestButtons(discord.ui.View):
     def __init__(self, amount:int):
@@ -107,146 +107,69 @@ class OperationrequestButtons(discord.ui.View):
             return
 
 class ExcuseButtons(discord.ui.View):
-    def __init__(self):
+    def __init__(self, days:int, member:discord.Member):
         super().__init__()
-        discord.ui.View.timeout = None
-    
-    @discord.ui.button(emoji="<:dsbbotAccept:1073668738827694131>", style=discord.ButtonStyle.grey)
-    async def AcceptButton(self, interaction:discord.Interaction, button:discord.ui.Button):
-        if not DSBPC_A(interaction.user):
-            return
-        else:
-            return
-
-    @discord.ui.button(emoji="<:dsbbotDeny:1073668785262833735>", style=discord.ButtonStyle.grey)
-    async def DenyButton(self, interaction:discord.Interaction, button:discord.ui.Button):
-        if not DSBPC_A(interaction.user):
-            return
-        else:
-            return
-        
-    @discord.ui.button(emoji="❌", style=discord.ButtonStyle.grey)
-    async def CancelButton(self, interaction:discord.Interaction, button:discord.ui.Button):
-        if interaction.user == interaction.message.interaction.user:
-            await interaction.message.delete()
-        else:
-            return
-        
-class LoAButtons(discord.ui.View):
-    def __init__(self):
-        super().__init__()
-        discord.ui.View.timeout = None
-    
-    @discord.ui.button(emoji="<:dsbbotAccept:1073668738827694131>", style=discord.ButtonStyle.grey)
-    async def AcceptButton(self, interaction:discord.Interaction, button:discord.ui.Button):
-        if not DSBPC_A(interaction.user):
-            return
-        else:
-            try:
-                member = interaction.guild.get_member(interaction.message.interaction.user.id)
-                role = discord.utils.get(interaction.message.guild.roles, name="DSB Leave of Absence")
-                await member.add_roles(role)
-                embed = interaction.message.embeds[0]
-                embed.title= embed.title.replace("<:dsbbotUnderReview:953642762857771138>", "<:dsbbotAccept:1073668738827694131>")
-                embed.set_footer(text=f"Accepted by {interaction.user.display_name} • {datetime.now().strftime('%d.%m.%y at %H:%M')}")
-                await interaction.message.interaction.user.send(f"Hello!\nYour LoA has been accepted by {interaction.user.display_name}. Enjoy your break! <:dsbbotThumbsUp:1085957344971722852>")
-                await interaction.message.edit(embed=embed, view=LoAEnd(loAID1=interaction.message.id))
-                await interaction.response.defer()
-            except Exception as e:
-                await interaction.response.send_message(f"{e}", ephemeral=True)
-
-    @discord.ui.button(emoji="<:dsbbotDeny:1073668785262833735>", style=discord.ButtonStyle.grey)
-    async def DenyButton(self, interaction:discord.Interaction, button:discord.ui.Button):
-        if not DSBPC_A(interaction.user):
-            return
-        else:
-            try:
-                embed = interaction.message.embeds[0]
-                embed.title= embed.title.replace("<:dsbbotUnderReview:953642762857771138>", "<:dsbbotDeny:1073668785262833735>")
-                embed.set_footer(text=f"Denied by {interaction.user.display_name} • {datetime.now().strftime('%d.%m.%y at %H:%M')}")
-                await interaction.message.edit(embed=embed, view=None)
-                await interaction.response.defer()
-            except Exception as e:
-                await interaction.response.send_message(f"{e}", ephemeral=True)
-        
-    @discord.ui.button(emoji="❌", style=discord.ButtonStyle.grey)
-    async def CancelButton(self, interaction:discord.Interaction, button:discord.ui.Button):
-        if interaction.user == interaction.message.interaction.user:
-            await interaction.message.delete()
-        else:
-            return
-        
-class LoAAck(discord.ui.View):
-    def __init__(self, loAID2:int, member:discord.Member):
-        super().__init__()
-        self.loaID2 = loAID2
+        self.days = days
         self.member = member
         discord.ui.View.timeout = None
     
-    @discord.ui.button(emoji="👍", style=discord.ButtonStyle.grey)
-    async def AckButton(self, interaction:discord.Interaction, button:discord.ui.Button):
-        if DSBPC_A(interaction.user):
-            role = discord.utils.get(interaction.message.guild.roles, name="DSB Leave of Absence")
-            await self.member.remove_roles(role)            
-            loamsgg = await interaction.channel.fetch_message(self.loaID2)
-            loamsg = loamsgg.embeds[0]
-            loamsg.title = loamsg.title.replace("<:dsbbotAccept:1073668738827694131>", "<:dsbbotDisabled2:1067970678608908288>")
-            await loamsgg.edit(embed=loamsg, view=None)
-            await interaction.message.edit(view=None)
-            await interaction.response.send_message(f"{self.member.mention}, your LoA ending has been acknowledged! Your new quota is `TBA`")
-        else:
+    @discord.ui.button(emoji="<:dsbbotAccept:1073668738827694131>", style=discord.ButtonStyle.grey)
+    async def AcceptButton(self, interaction:discord.Interaction, button:discord.ui.Button):
+        if not DSBPC_A(interaction.user):
             return
+        else:
+            data = db_register_get_data(self.member.id)
+            if data:
+                quota, rank = get_point_quota(self.member)
+                if quota == None:
+                    return await interaction.response.send_message(embed=discord.Embed(title="<:dsbbotFailed:953641818057216050> No quota found!", description=f"No quota was found for this operative."), ephemeral=True)
+                if set_days_onloa(self.member.id, self.days):
+                    updata = db_register_get_data(self.member.id)
+                    if updata[4] != None:
+                        quota_new = int(quota - ((quota/14)*updata[4]))
+                    else:
+                        quota_new = quota
+                embed = interaction.message.embeds[0]
+                embed.title= embed.title.replace("<:dsbbotUnderReview:953642762857771138>", "<:dsbbotAccept:1073668738827694131>")
+                embed.color=DarkGreenCOL
+                await interaction.message.edit(embed=embed, view=None)
+            start_date, end_date, blocknumber = get_quota()
+            return await interaction.response.send_message(f"{self.member.mention}", embed = discord.Embed(color=SuccessCOL, title=f"<:dsbbotSuccess:953641647802056756> Excuse Request Accepted!", description=f'New quota: **{quota_new} Points** <t:{end_date}:R>\nDays excused: **{updata[4]}**' if updata[4] == None else f'New quota: **{quota_new} Points** <t:{end_date}:R>\nDays excused: **{updata[4]} days**'))
 
-class LoAEnd(discord.ui.View):
-    def __init__(self, loAID1):
-        super().__init__()
-        self.loaID1 = loAID1
-        discord.ui.View.timeout = None
-    
-    
-    
-    @discord.ui.button(emoji="<:EndLoA:1067972498165071993>", label="End",style=discord.ButtonStyle.grey)
-    async def LoAEnd(self, interaction:discord.Interaction, button:discord.ui.Button):
-        member = interaction.guild.get_member(interaction.message.interaction.user.id)
-        if DSBPC_A(interaction.user):
-            role = discord.utils.get(interaction.message.guild.roles, name="DSB Leave of Absence")
-            await member.remove_roles(role)
+    @discord.ui.button(emoji="<:dsbbotDeny:1073668785262833735>", style=discord.ButtonStyle.grey)
+    async def DenyButton(self, interaction:discord.Interaction, button:discord.ui.Button):
+        if not DSBPC_A(interaction.user):
+            return
+        else:
             embed = interaction.message.embeds[0]
-            embed.title= embed.title.replace("<:dsbbotAccept:1073668738827694131>", "<:dsbbotDisabled2:1067970678608908288>")
-            await interaction.response.send_message(f"{interaction.message.interaction.user.mention}, your LoA has ended! Your new quota is `TBA`")
-            await interaction.message.edit(embed = embed, view=None)
-        elif interaction.user == interaction.message.interaction.user:
-            #print(self.loaID1)
-            await interaction.response.send_message(f"{interaction.user.mention} is ready to end their LoA!", view=LoAAck(loAID2=self.loaID1, member=member))
-            await interaction.followup.send("Please wait for a member of DSB PreComm+ to acknowledge your new request.", ephemeral=True)
+            embed.title= embed.title.replace("<:dsbbotUnderReview:953642762857771138>", "<:dsbbotDeny:1073668785262833735>")
+            embed.color=DarkRedCOL
+            await interaction.message.edit(embed=embed, view=None)
+            embed=discord.Embed(color=ErrorCOL, title="<:dsbbotDeny:1073668785262833735> Block Excuse Request Denied!", description=f"Your block excuse request has been **denied**. The person who reviewed it will provide you with the reason shortly.")
+            embed.set_footer(icon_url=interaction.user.avatar, text=f"Reviewed by {interaction.user.display_name} • {datetime.now().strftime('%d.%m.%y at %H:%M')}")
+            await interaction.response.send_message(f"{interaction.message.interaction.user.mention}", embed=embed)
+        
+    @discord.ui.button(emoji="❌", style=discord.ButtonStyle.grey)
+    async def CancelButton(self, interaction:discord.Interaction, button:discord.ui.Button):
+        if interaction.user == interaction.message.interaction.user:
+            await interaction.message.delete()
         else:
             return
-
-
 
 class ExcuseModal(ui.Modal, title="Block Excuse Request"):
-    days = ui.TextInput(label='How many days?', placeholder="Example: '4' ", max_length=2, required=True)
+    days = ui.TextInput(label='How many days?', placeholder="Please only enter digits. Must be in between 3 and 14 days.", max_length=2, required=True)
     reason = ui.TextInput(label='Reason?', style=discord.TextStyle.paragraph, required=True)
 
     async def on_submit(self, interaction: discord.Interaction):
         quota = get_quota()
+        if int(self.days.value) > 14 or (int(self.days.value) < 3):
+            return await interaction.response.send_message(embed=discord.Embed(title="<:dsbbotDeny:1073668785262833735> Invalud length!", description=f"You cannot be excused for less than 3 or more than 14 days. If you need to take a longer excuse, please file a regular Leave of Absence."), ephemeral=True)
         embed=discord.Embed(title=f"<:dsbbotUnderReview:953642762857771138> Block {quota[2]} Excuse Request", color=DSBCommandsCOL)
         embed.add_field(name="", value=f"**Rank and User:** {interaction.user.display_name}", inline=False)
-        embed.add_field(name="", value=f"**Requested length:** {self.days}", inline=False)
+        embed.add_field(name="", value=f"**Requested length:** {self.days} days" if int(self.days.value) > 1 else f"**Requested length:** {self.days} day", inline=False)
         embed.add_field(name="", value=f"**Reason:** ||{self.reason}||", inline=False)
-        await interaction.response.send_message(embed=embed, view=ExcuseButtons())
+        await interaction.response.send_message(embed=embed, view=ExcuseButtons(int(self.days.value), interaction.user))
         
-class LoAModal(ui.Modal, title="Leave of Absence Request"):
-    dep = ui.TextInput(label='Date of departure?', placeholder="Either MM/DD/YYYY or DD.MM.YYYY", required=True)
-    ret = ui.TextInput(label='Date of return?', placeholder="Either MM/DD/YYYY or DD.MM.YYYY", required=True)
-    reason = ui.TextInput(label='Reason?', style=discord.TextStyle.paragraph, required=True)
-    
-
-    async def on_submit(self, interaction: discord.Interaction):
-        rank = getrank(interaction.user)
-        embed=discord.Embed(title="<:dsbbotUnderReview:953642762857771138> Leave of Absence Request", color=DSBCommandsCOL)
-        embed.add_field(name="", value=f"**Username:** {interaction.user.display_name}\n**Rank:** {rank[0]}\n**Date departing:** {self.dep}\n**Date returning:** {self.ret}\n**Reason:** ||{self.reason}||", inline=False)
-        await interaction.response.send_message(embed=embed, view=LoAButtons())
 
 class RequestCmds(commands.GroupCog, group_name='request'):
     def __init__(self, bot: commands.Bot):
@@ -403,19 +326,15 @@ class RequestCmds(commands.GroupCog, group_name='request'):
         
     @app_commands.command(name="excuse", description="Request to be excused for a few days for the current block.")
     @app_commands.choices(type=[
-        app_commands.Choice(name="Leave of Absence", value="LoA"),
+        #app_commands.Choice(name="Leave of Absence", value="LoA"),
         app_commands.Choice(name="Block excuse", value="ExC"),
     ])
     async def request_ex(self, interaction: discord.Interaction, type:app_commands.Choice[str]):
-        await interaction.response.send_message(embed=discord.Embed(color=ErrorCOL, title="<:dsbbotFailed:953641818057216050> This command is not yet done!"), ephemeral=True)
-        return
-        '''
         if not DSBMEMBER(interaction.user):
             return await interaction.response.send_message(embed=discord.Embed(color=ErrorCOL, title="<:dsbbotFailed:953641818057216050> Missing permissions!", description=f"Only DSB Private First Class or above may interact with DSB Helper."), ephemeral=True)
         if not db_register_get_data(interaction.user.id):
             return await interaction.response.send_message(embed = discord.Embed(title=f"<:dsbbotFailed:953641818057216050> Interaction failed!", description="You were not found in registry database.\n*Use `/db register` to register.*", color=ErrorCOL), ephemeral=True)  
-        if type.value == "LoA":    
-            await interaction.response.send_modal(LoAModal())
+        #if type.value == "LoA":    
+        #    await interaction.response.send_modal(LoAModal())
         if type.value == "ExC":
             await interaction.response.send_modal(ExcuseModal())
-        '''

@@ -143,30 +143,6 @@ class PointCmds(commands.GroupCog, group_name='points'):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
     
-    @app_commands.command(name="excuse", description="Changes the quota for a user for the current block. [DSBPC+]")
-    async def loa_quota(self, interaction:discord.Interaction, member:discord.Member, set_amount:int):
-        if(not DSBPC_A(interaction.user)): # check if user has permission
-            embed = discord.Embed(color=ErrorCOL, title="<:dsbbotDeny:1073668785262833735> Missing Permission!", description=f"You must be a member of DSBPC or above to use this command.")
-            return await interaction.response.send_message(embed=embed, ephemeral=True)
-        if set_amount > 14:
-            return await interaction.response.send_message(embed=discord.Embed(title="<:dsbbotFailed:953641818057216050> Failed to set days!", description=f"`set_amount` cannot be over 14 days."), ephemeral=True)
-        data = db_register_get_data(member.id)
-        if data:
-            quota, rank = get_point_quota(member)
-            if data[4]:
-                quota_new = int(quota - ((quota/14)*data[4]))
-            if set_days_onloa(member.id, set_amount):
-                updata = db_register_get_data(member.id)
-                if updata[4] is not None:
-                    quota_new = int(quota - ((quota/14)*updata[4]))
-                else:
-                    quota_new = quota
-                return await interaction.response.send_message(f"{member.mention}", embed = discord.Embed(color=DSBCommandsCOL, title=f"<:dsbbotSuccess:953641647802056756> Default quota set for {member.display_name}!" if set_amount == 0 else f"<:dsbbotSuccess:953641647802056756> New quota for {member.display_name}!", description=f'New quota: **{quota_new} Points** <t:{end_date}:R>\nDays excused: **{updata[4]}**' if updata[4] == None else f'New quota: **{quota_new} Points** <t:{end_date}:R>\nDays excused: **{updata[4]} days**'))
-            else:
-                return await interaction.response.send_message(embed = discord.Embed(color=DSBCommandsCOL, title=f"<:dsbbotFailed:953641818057216050> Failed to set!", description=f"Something went wrong..."), ephemeral=True)
-        else:
-            return await interaction.response.send_message(embed = discord.Embed(title=f"<:dsbbotFailed:953641818057216050> `{member}` not found!", description="User not found in registry database.", color=ErrorCOL), ephemeral=True)
-
     @app_commands.command(name="add", description="Adds points to a user. [DSBPC+]")
     async def add(self, interaction:discord.Interaction, member:discord.Member, amount:int):
         user = interaction.user

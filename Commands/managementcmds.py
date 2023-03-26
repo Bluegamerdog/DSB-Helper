@@ -177,6 +177,7 @@ class ManagementCmds(commands.Cog):
                         return await interaction.response.send_message(embed=embed, ephemeral=True)
                 else:
                     print("Something was missed...")
+    
     #Welcome command
     @app_commands.command(name="welcome", description="Used to induct new DSB members once they've joined the server.")
     async def welcome_pvt(self, interaction:discord.Interaction, member:discord.Member):
@@ -246,16 +247,53 @@ class ManagementCmds(commands.Cog):
             await interaction.response.send_message(f"Status updated, watching {user.display_name}", ephemeral=True)
 
     @app_commands.command(name="updatequota",description="Updates the quota block start to end date. [DSBPC+]")
-    async def updatequota(self, interaction:discord.Interaction, start_date_new: int, end_date_new: int, blocknumber_new: int):
+    async def updatequota(self, interaction:discord.Interaction, new_start_date:int=None, new_end_date:int=None, new_blocknumber:int=None):
         if not DSBPC_A(interaction.user):
-            return await interaction.response.send_message(embed=discord.Embed(title="<:dsbbotFailed:953641818057216050> Failed to remove user!", description="You must be a member of DSBPC or above to update/change quota block data.", color=ErrorCOL))
+            return await interaction.response.send_message(embed=discord.Embed(title="<:dsbbotFailed:953641818057216050> Missing Permission!", description="You must be a member of DSBPC or above to use this command.", color=ErrorCOL))
+        if new_start_date is None and new_end_date is None and new_blocknumber is None:
+            await interaction.response.send_message(embed=discord.Embed(title="<:dsbbotFailed:953641818057216050> Failed to update quota!", description="You must provide at least one attribite. `new_start_date`, `new_end_date`, or `new_blocknumber`.", color=ErrorCOL), ephemeral=True)
+        updated = update_quota(new_start_date, new_end_date, new_blocknumber)
+        if updated == False:
+            await interaction.response.send_message(embed=discord.Embed(title="<:dsbbotFailed:953641818057216050> Failed to update quota!", description="The quota block has not yet been set up. Please provide all three attributes: `new_start_date`, `new_end_date`, and `new_blocknumber`.", color=ErrorCOL), ephemeral=True)
+            
         else:
-            start_date, end_date, blocknumber = get_quota()
-            update_quota(start_date_new, end_date_new, blocknumber_new)
-            embed = discord.Embed(color=HRCommandsCOL, title="Quota block change")
-            embed.add_field(name="From:", value=f"<t:{start_date}> - <t:{end_date}> || Block {blocknumber}", inline=False)
-            embed.add_field(name="To:", value=f"<t:{start_date_new}> - <t:{end_date_new}> || Block {blocknumber_new}", inline=False)
+            updatedtext = ""
+            if new_start_date != None:
+                updatedtext += "| Start Date "
+            if new_end_date != None:
+                updatedtext += "| End Date "
+            if new_blocknumber != None:
+                updatedtext += "| Blocknumber "
+            old_start_date, old_end_date, old_blocknumber = get_quota()
+
+            embed = discord.Embed(color=HRCommandsCOL, title="<:dsbbotCaution:1067970676041982053> Quota Block Updated!", description=f"Updated {updated} value ({updatedtext})" if updated == 1 else f"Updated {updated} values ({updatedtext})")
+            if new_start_date != None and new_end_date != None and new_blocknumber != None: # ALL 3
+                embed.add_field(name="From:", value=f"<t:{old_start_date}> - <t:{old_end_date}> || Block {old_blocknumber}", inline=False)
+                embed.add_field(name="To:", value=f"<t:{new_start_date}> - <t:{new_end_date}> || Block {new_blocknumber}", inline=False)
+            elif new_start_date != None and new_end_date == None and new_blocknumber == None: # Start
+                embed.add_field(name="", value=f"**From:** <t:{old_start_date}>", inline=False)
+                embed.add_field(name="", value=f"**To:** <t:{new_start_date}>", inline=False)
+            elif new_start_date == None and new_end_date != None and new_blocknumber == None: # End
+                embed.add_field(name="", value=f"**From:** <t:{old_end_date}>", inline=False)
+                embed.add_field(name="", value=f"**To:** <t:{new_end_date}>", inline=False)    
+            elif new_start_date == None and new_end_date == None and new_blocknumber != None: # Block
+                embed.add_field(name="", value=f"**From:** Block {old_blocknumber}", inline=False)
+                embed.add_field(name="", value=f"**To:** Block {new_blocknumber}", inline=False)
+            elif new_start_date != None and new_end_date != None and new_blocknumber == None: # Start-End
+                embed.add_field(name="", value=f"**From:** <t:{old_start_date}> - <t:{old_end_date}>", inline=False)
+                embed.add_field(name="", value=f"**To:** <t:{new_start_date}> - <t:{new_end_date}>", inline=False)
+            elif new_start_date != None and new_end_date == None and new_blocknumber != None: # Start-Block
+                embed.add_field(name="", value=f"**From:** <t:{old_start_date}> || Block {new_blocknumber}", inline=False)
+                embed.add_field(name="", value=f"**To:** <t:{new_start_date}> || Block {new_blocknumber}", inline=False)
+            elif new_start_date == None and new_end_date != None and new_blocknumber != None: # End-Block
+                embed.add_field(name="", value=f"**From:** <t:{old_end_date}> || Block {new_blocknumber}", inline=False)
+                embed.add_field(name="", value=f"**To:** <t:{new_end_date}> || Block {new_blocknumber}", inline=False)
+            else:
+                embed.add_field(name="", value="You missed a combination...", inline= False)
+                embed.add_field(name="From:", value=f"<t:{old_start_date}> - <t:{old_end_date}> || Block {old_blocknumber}", inline=False)
+                embed.add_field(name="To:", value=f"<t:{new_start_date}> - <t:{new_end_date}> || Block {new_blocknumber}", inline=False)
+                
             await interaction.response.send_message(embed=embed)
-            quota_get()
+            
 
 

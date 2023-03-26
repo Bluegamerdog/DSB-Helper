@@ -7,7 +7,7 @@ from Functions.mainVariables import *
 from Functions.permFunctions import *
 from Functions.randFunctions import (get_point_quota, get_quota_completion_percentage, totalquota_withoutPC, totalpoints_withoutPC, quota_prog_display)
 
-start_date, end_date, blocknumber = get_quota()
+
 
 class overviewButtons(discord.ui.View):
     def __init__(self, bot: commands.Bot):
@@ -54,6 +54,7 @@ class overviewButtons(discord.ui.View):
         last_user_count = (page - 1) * 10 + 1
         has_points = False
         embed = interaction.message.embeds[0]
+        start_date, end_date, blocknumber = get_quota()
         embed.title = f"Point Overview - Block {blocknumber}"
         embed.description = f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nQuota block {blocknumber} ends <t:{end_date}:R>. \n<t:{start_date}> - <t:{end_date}>\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
         embed.clear_fields()
@@ -119,6 +120,7 @@ class overviewButtons(discord.ui.View):
         embed = interaction.message.embeds[0]
         embed.clear_fields()
         embed.remove_footer()
+        start_date, end_date, blocknumber = get_quota()
         embed.title = f"Quota Summary - Block {blocknumber}"
         embed.description = f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nQuota block {blocknumber} ends <t:{end_date}:R>. \n<t:{start_date}> - <t:{end_date}>\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
         
@@ -245,6 +247,7 @@ class PointCmds(commands.GroupCog, group_name='points'):
             return await interaction.response.send_message(embed=discord.Embed(color=ErrorCOL, title="<:dsbbotFailed:953641818057216050> Missing permissions!", description=f"Only DSB Private First Class or above may interact with DSB Helper."), ephemeral=True)
         else:
             gettingembed = discord.Embed(description="Getting data...")
+            start_date, end_date, blocknumber = get_quota()
             await interaction.response.send_message(embed=gettingembed)
             rows = get_users_amount(1)                                                                   
             embed = discord.Embed(title =f"Point Overview - Block {blocknumber}", description=f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nQuota block {blocknumber} ends <t:{end_date}:R>. \n<t:{start_date}> - <t:{end_date}>\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", color=DSBCommandsCOL)

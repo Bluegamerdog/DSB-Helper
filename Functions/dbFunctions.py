@@ -204,14 +204,36 @@ def update_leaderboard(page, last_user, message_id):
     conn.commit()
 
 ## QUOTA ##
-def update_quota(start, end, block):
+
+def update_quota(start=None, end=None, block=None):
     conn, cur = get_conn()
     cur.execute("SELECT * FROM quota_table")
     data = cur.fetchall()
     if len(data) == 0:
-        cur.execute("INSERT INTO quota_table (start, end, block) VALUES (?,?,?)", (start, end, block))
+        if start == None or end == None or block == None:
+            return False # If there is no existing quota information, you have to provide all three values.
+        else:
+            cur.execute("INSERT INTO quota_table (start, end, block) VALUES (?,?,?)", (start, end, block))
     else:
-        cur.execute("UPDATE quota_table SET start=?, end=?, block=?", (start, end, block))
+        updated = 0
+        if start is not None:
+            cur.execute("UPDATE quota_table SET start=?", (start,))
+            if cur.rowcount > 0:
+                updated += 1
+        if end is not None:
+            cur.execute("UPDATE quota_table SET end=?", (end,))
+            if cur.rowcount > 0:
+                updated += 1
+        if block is not None:
+            cur.execute("UPDATE quota_table SET block=?", (block,))
+            if cur.rowcount > 0:
+                updated += 1
+        if updated >= 1:
+            conn.commit()
+            return updated
+        else:
+            return False
+            
     conn.commit()
 
 def get_quota():

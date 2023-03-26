@@ -5,12 +5,6 @@ from Functions.permFunctions import (DSBPC_A, onLoA)
 from discord.ext import commands
 
 
-def quota_get():
-    global start_date
-    global end_date
-    global blocknumber
-    start_date, end_date, blocknumber = get_quota()
-
 def get_point_quota(user, data=None):
     role_quota = {
         "Private First Class": (16, "Private First Class"),

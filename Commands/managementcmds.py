@@ -6,7 +6,7 @@ import random
 from Functions.mainVariables import *
 from Functions.permFunctions import *
 from Functions.dbFunctions import (update_quota, replace_value, db_register_get_data)
-from Functions.randFunctions import (quota_get, get_quota, getrank, changerank, change_nickname, get_user_id_from_link, get_point_quota, set_days_onloa)
+from Functions.randFunctions import (get_quota, getrank, changerank, change_nickname, get_user_id_from_link, get_point_quota, set_days_onloa)
 from discord.ext import commands
 from discord import app_commands
 from discord import ui

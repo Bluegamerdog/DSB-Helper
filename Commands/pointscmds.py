@@ -194,7 +194,7 @@ class PointCmds(commands.GroupCog, group_name='points'):
                 onloa = onLoA(user)
                 percent = float(points / quota * 100)
                 if percent:
-                    qm = quota_prog_display(percent, onLoA(user))
+                    qm = quota_prog_display(percent, onloa)
                 if onloa == True:
                     quota = 0
                 embed.add_field(name=f"{qm} {percent:.1f}% || {points}/{quota}", value="")

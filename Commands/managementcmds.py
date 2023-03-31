@@ -134,6 +134,22 @@ class ManagementCmds(commands.Cog):
                         
                         group = await roblox.get_group(15155104)
                         await user.edit(nick=change_nickname(newrank[0], user.display_name))
+                        if data:
+                            await group.get_member(get_user_id_from_link(data[2])).set_rank(newrank[1])
+                        else:
+                            username = await roblox.get_user_by_username(str(user.display_name).split()[-1])
+                            print(username.id)
+                            success = await group.get_member(username.id).set_rank(newrank[1])
+                            print(success)
+                            if userrank[1] != 1:
+                                await interaction.user.send(f"{user} was promoted, but not found in the database.")
+                            else:
+                                if rank.value == "PFC":
+                                    await user.send(embed= discord.Embed(title="Congratulations on successfully passing your Private phase!", description=f"You are now a full-fledged operative of DSB who's ready to stand their ground in the face of danger. 🛡️\n\nNow that you're a Private First Class, be sure to register with me by running the command `/db register` in <#1058677991238008913> and follow the subsequent instructions.\n\nI will shortly add you to the <#1058758885361594378>. Here is where you will log your patrols to meet your points quota. All other information regarding logging patrols is in the pinned messages.\n\nLastly, be sure to request your 'Defensive Squadron Bravo' role in main QSO by pinging any online member of QSO Precommand in <#937473342716395543>.\n\nIf any of this information is unclear, don't hesitate to ping anyone in DSB management. <:DSB:1060271947725930496>", color=DSBCommandsCOL))
+                                    thread = self.bot.get_channel(1091329264764321843)
+                                    ondutychannel = self.bot.get_channel(1091329185500381235)
+                                    await thread.send(f"{user.mention}")
+                                    await ondutychannel.send(f"Please congragulate **{user.display_name}** on passing their Private phase!")
                         await group.get_member(get_user_id_from_link(data[2])).set_rank(newrank[1])
                         await user.add_roles(newrank_role) 
                         await user.remove_roles(userrank_role)
@@ -193,10 +209,42 @@ class ManagementCmds(commands.Cog):
         await interaction.response.send_message(embed=discord.Embed(color=DSBCommandsCOL, title=f"<:dsbbotSuccess:953641647802056756> Success!",description=f"{member.name} should now have their roles and should have received the welcome message :D"), ephemeral=True)
     
     @app_commands.command(name="accept", description="Used to accept new DSB members into the roblox group.")
-    async def accept_pvt(self, interaction:discord.Interaction, member:discord.Member):
+    async def join_dsb(self, interaction:discord.Interaction, member:discord.Member):
         if not DSBPC_A(interaction.user):
             return await interaction.response.send_message(embed=discord.Embed(color=ErrorCOL, title="<:dsbbotDeny:1073668785262833735> Missing Permission!", description=f"You must be a member of DSBPC or above to use this command."), ephemeral=True)
-        return await interaction.response.send_message(embed=discord.Embed(color=ErrorCOL, title="<:dsbbotFailed:953641818057216050> Missing Permission!", description=f"This command is currently disabled as we wait for Aera to update the roblox group."), ephemeral=True)      
+        try:
+            username = str(member.display_name).split()[-1]
+            group = await roblox.get_group(15155104)
+            user = await roblox.get_user_by_username(username)
+            await group.accept_user(user)
+            await interaction.response.send_message(embed=discord.Embed(color=DSBCommandsCOL, title=f"<:dsbbotSuccess:953641647802056756> Accepted {username}!"), ephemeral=True)
+            await member.send(embed = discord.Embed(description=f"Your request to join the `Defensive Squadron Bravo` Roblox group has been accepted.", color=DSBCommandsCOL))
+        except Exception as e:
+            print(e)
+            await interaction.response.send_message(embed=discord.Embed(color=ErrorCOL, title="<:dsbbotFailed:953641818057216050> Error!", description=f"An error occurred while accepting {username}: {str(e)}"), ephemeral=True)
+      
+    
+    @app_commands.command(name="dsbkick", description="Used to kick DSB members.")
+    async def kick_dsb(self, interaction:discord.Interaction, member:discord.Member, reason:str):
+        if not DSBPC_A(interaction.user):
+            return await interaction.response.send_message(embed=discord.Embed(color=ErrorCOL, title="<:dsbbotDeny:1073668785262833735> Missing Permission!", description=f"You must be a member of DSBPC or above to use this command."), ephemeral=True)
+        try:
+            username = str(member.display_name).split()[-1] 
+            group = await roblox.get_group(15155104)
+            user = await roblox.get_user_by_username(username)
+            logsch = self.bot.get_channel(1008449677210943548) #audit-logs
+            kickembed = discord.Embed(title=f"<:DSB:1060271947725930496> Kicked DSB Member", description=f"{member.mention} has been kicked from DSB by {interaction.user.mention}.\n\n**Reason:** {reason}", color=DarkRedCOL)
+            kickembed.set_thumbnail(url=member.avatar.url)
+            kickembed.set_footer(text=f"ID: {member.id} • {datetime.datetime.now().strftime('%m/%d/%Y %H:%M %p')}")
+            logmsg = await logsch.send(embed=kickembed)
+            await interaction.response.send_message(embed = discord.Embed(title=f"<:dsbbotSuccess:953641647802056756> Member removed", description=f"Successfully removed {member.mention} from DSB.\n\n**Reason:** {reason}\n→ [Audit Log]({logmsg.jump_url})", color=DarkRedCOL))
+            await member.send(embed = discord.Embed(title=f"You have been kicked from Defensive Squadron Bravo.",description=f"**Reason:** {reason}", color=DarkRedCOL))
+            await group.kick_user(user)
+            await member.kick(reason=reason)
+        except Exception as e:
+            print(e)
+            await interaction.response.send_message(embed=discord.Embed(color=ErrorCOL, title="<:dsbbotFailed:953641818057216050> Error!", description=f"An error occurred while accepting {username}: {str(e)}"), ephemeral=True)
+
 
     @app_commands.command(name="excuse", description="Changes the quota for a user for the current block. [DSBPC+]")
     @app_commands.describe(member="The operative you're excusing.", days="The amount of days the operative is being excused for. Cannot be more than 14 days.")

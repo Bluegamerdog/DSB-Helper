@@ -193,17 +193,15 @@ class PointCmds(commands.GroupCog, group_name='points'):
             if quota:
                 onloa = onLoA(user)
                 percent = float(points / quota * 100)
-                if percent:
-                    qm = quota_prog_display(percent, onloa)
+                qm = quota_prog_display(percent, onloa)
                 if onloa == True:
                     quota = 0
                 embed.add_field(name=f"{qm} {percent:.1f}% || {points}/{quota}", value="")
                 if not data[4]:
-                    embed.add_field(name="", value=f"\n\nRank: **{rank}**\nPoints: **{points}**", inline=False)
+                    embed.add_field(name="", value=f"Rank: **{rank}**\nPoints: **{points}**", inline=False)
                 else:
-                    embed.add_field(name="", value=f"\n\nRank: **{rank}**\nPoints: **{points}**\nDays excused: **{data[4]}**", inline=False)
+                    embed.add_field(name="", value=f"Rank: **{rank}**\nPoints: **{points}**\nDays excused: **{data[4]}**", inline=False)
             else:
-                embed.add_field(name="", value="")
                 embed.add_field(name="", value=f"Rank: {rank}\nPoints: **{points}**", inline=False)
             
             await interaction.response.send_message(embed=embed)

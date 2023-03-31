@@ -26,7 +26,7 @@ def get_point_quota(user, data=None):
     for role in user.roles:
         if role.name in role_quota:
             quota, rank = role_quota[role.name]
-            if data and data[4]:
+            if data and data[4] and DSBPC_A(user)==False:
                 quota = int(quota - ((quota/14)*data[4]))
             return quota, rank
     

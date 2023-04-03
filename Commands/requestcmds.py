@@ -191,13 +191,11 @@ class RequestCmds(commands.GroupCog, group_name='request'):
             return await interaction.response.send_message(embed=discord.Embed(color=ErrorCOL, title="<:dsbbotFailed:953641818057216050> Invalid length!", description=f"The length of your patrol must be at least 30 minutes." if length < 30 else "Your patrol should not be over 9hs or 540 minutes..."), ephemeral=True)
         else:
             if length <= 60:
-                #amount = 2
-                amount = random.uniform(0.001, 1000000000)
+                amount = 2
             else:
-                #amount = 2
-                #extra = math.floor((length - 60+7) / 30)
-                #amount += extra
-                amount = random.uniform(0.001, 1000000000)
+                amount = 2
+                extra = math.floor((length - 60+7) / 30)
+                amount += extra
         embed = discord.Embed(color=DSBCommandsCOL, title=f"<:dsbbotUnderReview:953642762857771138> __Patrol__ Point Request - {interaction.user.display_name}")
         embed.add_field(name="", value="")
         embed.add_field(name="", value=f"**{interaction.user.display_name}** has requested **{amount} points** for patrolling **{length} minutes**.\n\n→ **[Log Message]({log})**", inline=False)
@@ -240,7 +238,7 @@ class RequestCmds(commands.GroupCog, group_name='request'):
                     error_msg = f"`Co-Hosts:` {co_host_member.mention} was mentioned twice."
                     break
                 cohost_list.append(co_host_member)
-                points_dict[co_host_member.id] = random.uniform(0.001, 1000000000) #co_host_points(co_host_member)
+                points_dict[co_host_member.id] = co_host_points(co_host_member)
             if error_msg:
                 return await interaction.response.send_message(embed=discord.Embed(color=ErrorCOL, title="<:dsbbotFailed:953641818057216050> Invalid Input! || Error", description=error_msg), ephemeral=True)
             cohtxt = ", ".join([f"{cohost.display_name}[{points_dict[cohost.id]}]" for cohost in cohost_list])
@@ -270,7 +268,7 @@ class RequestCmds(commands.GroupCog, group_name='request'):
                     error_msg = f"`Supervisors:` {supervisor_member.mention} is not an Sergeant Major or above."
                     break
                 soup_list.append(supervisor_member)
-                points_dict[supervisor_member.id] = random.uniform(0.001, 1000000000) #= supervisor_points(supervisor_member)
+                points_dict[supervisor_member.id] = supervisor_points(supervisor_member) #= random.uniform(0.001, 1000000000)
             if error_msg:
                 return await interaction.response.send_message(embed=discord.Embed(color=ErrorCOL, title="<:dsbbotFailed:953641818057216050> Invalid Input! || Error", description=error_msg), ephemeral=True)
             souptxt = ", ".join([f"{supervisor.display_name}[{supervisor_points(supervisor)}]" for supervisor in soup_list])
@@ -301,7 +299,7 @@ class RequestCmds(commands.GroupCog, group_name='request'):
                     error_msg = f"`Attendees:` {attendee_member.mention} is not a valid attendee. No point value found for this rank/person."
                     break
                 attendees_list.append(attendee_member)
-                points_dict[attendee_member.id] = random.uniform(0.001, 1000000000) #= attendance_points(attendee_member)
+                points_dict[attendee_member.id] = attendance_points(attendee_member)
             if error_msg:
                 return await interaction.response.send_message(embed=discord.Embed(color=ErrorCOL, title="<:dsbbotFailed:953641818057216050> Invalid Input! || Error", description=error_msg), ephemeral=True)
             atttxt = ", ".join([f"{attendee.display_name}[{attendance_points(attendee)}]" for attendee in attendees_list])
@@ -315,8 +313,8 @@ class RequestCmds(commands.GroupCog, group_name='request'):
         
         if ringleader:
             if ITMR_A(ringleader):
-                points_dict[ringleader.id] = random.uniform(0.001, 1000000000)#= ringleader_points(ringleader)
-                embed.add_field(name="", value=f"`Ringleader:` {ringleader.display_name}[{random.uniform(0.001, 1000000000)}]") #ringleader_points(ringleader)
+                points_dict[ringleader.id] = ringleader_points(ringleader)
+                embed.add_field(name="", value=f"`Ringleader:` {ringleader.display_name}[{ringleader_points(ringleader)}]")
             else:
                 return await interaction.response.send_message(embed=discord.Embed(color=ErrorCOL, title="<:dsbbotDeny:1073668785262833735> Invalid Input", description=f"{ringleader.mention} is not DSB MR or above."))
         if co_hosts:

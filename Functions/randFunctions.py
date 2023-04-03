@@ -66,7 +66,7 @@ def attendance_points(user):
         "Private First Class": 4,
         "Corporal": 4,
         "Sergeant": 4,
-        "Supervised Staff Sergeant": 2,
+        "Junior Staff Sergeant": 2,
         "Staff Sergeant": 2,
         "Sergeant Major": 2,
         "Chief Sergeant": 2,
@@ -80,7 +80,7 @@ def attendance_points(user):
 
 def co_host_points(user):
     roles_ = {
-        "Supervised Staff Sergeant": 5,
+        "Junior Staff Sergeant": 5,
         "Staff Sergeant": 4,
         "Sergeant Major": 6,
         "Chief Sergeant": 6,
@@ -110,7 +110,7 @@ def supervisor_points(user):
 
 def ringleader_points(user):
     roles_ = {
-        "Supervised Staff Sergeant": 7,
+        "Junior Staff Sergeant": 7,
         "Staff Sergeant": 8,
         "Sergeant Major": 8,
         "Chief Sergeant": 7,
@@ -182,7 +182,7 @@ def getrank(user):
         "Private First Class": ("Private First Class", 4),
         "Corporal": ("Corporal", 6),
         "Sergeant": ("Sergeant", 16),
-        "Supervised Staff Sergeant": ("Supervised Staff Sergeant", 18),
+        "Junior Staff Sergeant": ("Junior Staff Sergeant", 18),
         "Staff Sergeant": ("Staff Sergeant", 18),
         "Sergeant Major": ("Sergeant Major", 20),
         "Chief Sergeant": ("Chief Sergeant", 25),
@@ -204,7 +204,7 @@ def changerank(rank):
         "PFC": ("Private First Class", 4),
         "Crp": ("Corporal", 6),
         "Sgt": ("Sergeant", 10),
-        "SvSSgt": ("Supervised Staff Sergeant", 18),
+        "J.SSgt": ("Junior Staff Sergeant", 18),
         "SSgt": ("Staff Sergeant", 18),
         "SMaj": ("Sergeant Major", 20),
         "CSgt": ("Chief Sergeant", 25),
@@ -222,7 +222,7 @@ def change_nickname(rank_name, prev_nickname):
         "Private First Class": "PFC",
         "Corporal": "Crp",
         "Sergeant": "Sgt",
-        "Supervised Staff Sergeant":"SvSSgt",
+        "Junior Staff Sergeant":"J.SSgt",
         "Staff Sergeant": "SSgt",
         "Sergeant Major": "SMaj",
         "Chief Sergeant": "CSgt",

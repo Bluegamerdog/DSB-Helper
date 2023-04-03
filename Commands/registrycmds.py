@@ -7,12 +7,12 @@ from Functions.mainVariables import *
 from Functions.permFunctions import *
 from Functions.randFunctions import *
 
-class RegistryCmds(commands.GroupCog, group_name='db'):
+class RegistryCmds(commands.GroupCog, group_name='registry'):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
     
 
-    @app_commands.command(name="register", description="This command is used to add new data to the registry database.")
+    @app_commands.command(name="new", description="This command is used to add new data to the registry database.")
     async def register_new(self, interaction: discord.Interaction, roblox_profile_link: str, user: discord.Member=None):
         if not DSBMEMBER(interaction.user):
             return await interaction.response.send_message(embed=discord.Embed(title="<:dsbbotFailed:953641818057216050> Registry failed!", description=f"Only DSB Private First Class or above may register.", color=ErrorCOL))

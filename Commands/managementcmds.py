@@ -94,7 +94,7 @@ class ManagementCmds(commands.Cog):
     app_commands.Choice(name="Private First Class", value="PFC"),
     app_commands.Choice(name="Corporal", value="Crp"),
     app_commands.Choice(name="Sergeant", value="Sgt"),
-    app_commands.Choice(name="Supervised Staff Sergeant", value="SvSSgt"),
+    app_commands.Choice(name="Junior Staff Sergeant", value="J.SSgt"),
     app_commands.Choice(name="Staff Sergeant", value="SSgt"),
     app_commands.Choice(name="Sergeant Major", value="SMaj"),
     app_commands.Choice(name="Chief Sergeant", value="CSgt"),])
@@ -107,7 +107,7 @@ class ManagementCmds(commands.Cog):
             userrank = getrank(user)
             if rank.value=="SSgt" and userrank[1] <=18:
                 if userrank[1] == 18:
-                    oldrank_role = discord.utils.get(interaction.guild.roles, name="Supervised Staff Sergeant")
+                    oldrank_role = discord.utils.get(interaction.guild.roles, name="Junior Staff Sergeant")
                     newrank_role = discord.utils.get(interaction.guild.roles, name="Staff Sergeant")
                     await user.edit(nick=change_nickname("Staff Sergeant", user.display_name))
                     await user.add_roles(newrank_role)
@@ -116,7 +116,7 @@ class ManagementCmds(commands.Cog):
                     embed.set_footer(icon_url=interaction.user.avatar, text=f"Processed by {interaction.user.display_name}  •  {datetime.datetime.now().strftime('%d.%m.%y')}")
                     return await interaction.response.send_message(content=f"{user.mention}", embed=embed)
                 else:
-                    return await interaction.response.send_message(embed=discord.Embed(title="<:dsbbotFailed:953641818057216050> Rank Error!", description="You can only promote **Supervised Staff Sergeants** to **Staff Sergeant**.", color=ErrorCOL), ephemeral=True)
+                    return await interaction.response.send_message(embed=discord.Embed(title="<:dsbbotFailed:953641818057216050> Rank Error!", description="You can only promote **Junior Staff Sergeants** to **Staff Sergeant**.", color=ErrorCOL), ephemeral=True)
                 
             userrank = getrank(user)
             newrank = changerank(rank.value)
@@ -145,7 +145,7 @@ class ManagementCmds(commands.Cog):
                                 await interaction.user.send(f"{user} was promoted, but not found in the database.")
                             else:
                                 if rank.value == "PFC":
-                                    await user.send(embed= discord.Embed(title="Congratulations on successfully passing your Private phase!", description=f"You are now a full-fledged operative of DSB who's ready to stand their ground in the face of danger. 🛡️\n\nNow that you're a Private First Class, be sure to register with me by running the command `/db register` in <#1058677991238008913> and follow the subsequent instructions.\n\nI will shortly add you to the <#1058758885361594378>. Here is where you will log your patrols to meet your points quota. All other information regarding logging patrols is in the pinned messages.\n\nLastly, be sure to request your 'Defensive Squadron Bravo' role in main QSO by pinging any online member of QSO Precommand in <#937473342716395543>.\n\nIf any of this information is unclear, don't hesitate to ping anyone in DSB management. <:DSB:1060271947725930496>", color=DSBCommandsCOL))
+                                    await user.send(embed= discord.Embed(title="Congratulations on successfully passing your Private phase!", description=f"You are now a full-fledged operative of DSB who's ready to stand their ground in the face of danger. 🛡️\n\nNow that you're a Private First Class, be sure to register with me by running the command `/registry new` in <#1058677991238008913> and follow the subsequent instructions.\n\nI will shortly add you to the <#1058758885361594378>. Here is where you will log your patrols to meet your points quota. All other information regarding logging patrols is in the pinned messages.\n\nLastly, be sure to request your 'Defensive Squadron Bravo' role in main QSO by pinging any online member of QSO Precommand in <#937473342716395543>.\n\nIf any of this information is unclear, don't hesitate to ping anyone in DSB management. <:DSB:1060271947725930496>", color=DSBCommandsCOL))
                                     thread = self.bot.get_channel(1091329264764321843)
                                     ondutychannel = self.bot.get_channel(1091329185500381235)
                                     await thread.send(f"{user.mention}")

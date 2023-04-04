@@ -10,7 +10,7 @@ def get_point_quota(user, data=None):
         "Private First Class": (16, "Private First Class"),
         "Corporal": (16, "**Corporal**"),
         "Sergeant": (20, "**Sergeant**"),
-        "Supervised Staff Sergeant": (26, "**Supervised Staff Sergeant**"),
+        "Junior Staff Sergeant": (26, "**Junior Staff Sergeant**"),
         "Staff Sergeant": (32, "**Staff Sergeant**"),
         "Sergeant Major": (36, "**Sergeant Major**"),
         "Chief Sergeant": (36, "**Chief Sergeant**"),

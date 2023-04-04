@@ -133,7 +133,6 @@ class ManagementCmds(commands.Cog):
                         newrank_role = discord.utils.get(interaction.guild.roles, name=str(newrank[0]))
                         
                         group = await roblox.get_group(15155104)
-                        await user.edit(nick=change_nickname(newrank[0], user.display_name))
                         if data:
                             await group.get_member(get_user_id_from_link(data[2])).set_rank(newrank[1])
                         else:
@@ -150,8 +149,8 @@ class ManagementCmds(commands.Cog):
                                     ondutychannel = self.bot.get_channel(1091329185500381235)
                                     await thread.send(f"{user.mention}")
                                     await ondutychannel.send(f"Please congragulate **{user.display_name}** on passing their Private phase!")
-                        await group.get_member(get_user_id_from_link(data[2])).set_rank(newrank[1])
-                        await user.add_roles(newrank_role) 
+                        await user.add_roles(newrank_role)
+                        await user.edit(nick=change_nickname(newrank[0], user.display_name))
                         await user.remove_roles(userrank_role)
                         if newrank[1] >= 18 and userrank[1] < 18:
                             mr_role = discord.utils.get(interaction.guild.roles, name="Operation Ringleader")
@@ -175,8 +174,8 @@ class ManagementCmds(commands.Cog):
                         await group.get_member(get_user_id_from_link(data[2])).set_rank(newrank[1])
                         userrank_role = discord.utils.get(interaction.guild.roles, name=str(userrank[0]))
                         newrank_role = discord.utils.get(interaction.guild.roles, name=str(newrank[0]))
-                        await user.edit(nick=change_nickname(newrank[0], user.display_name))
                         await user.add_roles(newrank_role)
+                        await user.edit(nick=change_nickname(newrank[0], user.display_name))
                         await user.remove_roles(userrank_role)
                         if userrank[1] >= 16 and newrank[1] <16:
                             mr_role = discord.utils.get(interaction.guild.roles, name="Operation Ringleader")

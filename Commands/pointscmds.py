@@ -187,7 +187,8 @@ class PointCmds(commands.GroupCog, group_name='points'):
             points = get_points(user.id)
             if points is False:
                 return await interaction.response.send_message(embed = discord.Embed(title=f"<:dsbbotFailed:953641818057216050> No point data found for `{user}`!", description="User not found in registry database.", color=ErrorCOL))
-            embed = discord.Embed(color=DSBCommandsCOL, title=f"<:dsbbotSuccess:953641647802056756> Point data found!")
+            username = str(user.display_name)
+            embed = discord.Embed(color=DSBCommandsCOL, title=f"<:dsbbotSuccess:953641647802056756> Point data for {username}!!")
             data = db_register_get_data(user.id)
             quota, rank = get_point_quota(user, data)
             if quota:

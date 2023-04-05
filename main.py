@@ -35,7 +35,7 @@ start_date, end_date, blocknumber = get_quota()
 async def on_ready():
     print("Loading imports...")
     await bot.add_cog(ManagementCmds(bot))
-    #await bot.add_cog(OperationCmds(bot))
+    await bot.add_cog(OperationCmds(bot))
     await bot.add_cog(soupCmd(bot))
     await bot.add_cog(otherCmds(bot))
     await bot.add_cog(PointCmds(bot))

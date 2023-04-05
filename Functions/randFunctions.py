@@ -1,16 +1,27 @@
 import re
+import random
+import string
 from Functions.dbFunctions import *
 from Functions.mainVariables import *
 from Functions.permFunctions import (DSBPC_A, onLoA)
 from discord.ext import commands
 
 
+blacklist = ['SEX', 'FUC', 'FUK', "KYS", "ASS", "NIG", "GGR", "GER"] # Need to add more
+
+def random_oppal(length):
+    letters = string.ascii_uppercase
+    while True:
+        pals = ''.join(random.choice(letters) for i in range(length))
+        if not any(black in pals for black in blacklist):  # check if any blacklisted combination exists in the string
+            return pals
+
 def get_point_quota(user, data=None):
     role_quota = {
         "Private First Class": (16, "Private First Class"),
         "Corporal": (16, "**Corporal**"),
         "Sergeant": (20, "**Sergeant**"),
-        "Supervised Staff Sergeant": (26, "**Supervised Staff Sergeant**"),
+        "Junior Staff Sergeant": (26, "**Junior Staff Sergeant**"),
         "Staff Sergeant": (32, "**Staff Sergeant**"),
         "Sergeant Major": (36, "**Sergeant Major**"),
         "Chief Sergeant": (36, "**Chief Sergeant**"),

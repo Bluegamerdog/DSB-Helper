@@ -1,11 +1,11 @@
-def DSBCOMM_A(user): # function to check if user is DSBPCOMM+
+def DSBCOMM_A(user): # function to check if user is DSBCOMM+
     roles = user.roles
     for role in roles:
         if role.name in ["QSO Pre-Command", "QSO Command", "DSB Command"] or role.permissions.administrator:
             return True
     return False
 
-def DSBPC_A(user): # function to check if user is DSBPC+ 
+def DSBPC_A(user): # function to check if user is DSBPreCom+ 
     roles = user.roles
     for role in roles:
         if role.name in ["DSB Pre-Command", "QSO Pre-Command", "QSO Command", "DSB Command"] or role.permissions.administrator:
@@ -15,14 +15,14 @@ def DSBPC_A(user): # function to check if user is DSBPC+
 def FMR_A(user): # function to check if user is MR+
     roles = user.roles
     for role in roles:
-        if role.name in ["Operation Ringleader", "DSB Pre-Command", "QSO Pre-Command", "QSO Command", "DSB Command"] or role.permissions.administrator:
+        if role.name in ["Staff Sergeant","Sergeant Major","Chief Sergeant", "DSB Pre-Command", "QSO Pre-Command", "QSO Command", "DSB Command"] or role.permissions.administrator:
             return True
     return False
 
 def ITMR_A(user): # MR in-training and above
     roles = user.roles
     for role in roles:
-        if role.name in ["Staff Sergeant", "Operation Ringleader" ,"DSB Pre-Command", "QSO Pre-Command", "QSO Command", "DSB Command"] or role.permissions.administrator:
+        if role.name in ["Junior Staff Sergeant", "Operation Ringleader" ,"DSB Pre-Command", "QSO Pre-Command", "QSO Command", "DSB Command"] or role.permissions.administrator:
             return True
     return False
 

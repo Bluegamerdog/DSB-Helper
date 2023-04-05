@@ -11,35 +11,31 @@ from Functions.randFunctions import (random_oppal, getrank)
 from discord import ui
 
 class DossierModal(ui.Modal, title="Operation Dossier"):
-    def __init__(self, operation:str, picture:discord.Attachment):
+    def __init__(self, operation:str, picture:discord.Attachment, ringleader:discord.Member, attendees:str, co_host:str=None, soups:str=None):
         super().__init__(timeout=None)
         self.operation = operation
         self.picture = picture
+        self.ringleader = ringleader
+        self.attendees = attendees
+        self.co_host = co_host
+        self.soups = soups
+        self.opinfo = op_get_info(operation)
         
-    timedate = ui.TextInput(label='Time & Date', placeholder="XX:XXZ - XX:XXZ | MM/DD/YYYY", required=True)
-    co_host = ui.TextInput(label='Co-Hosts', style=discord.TextStyle.short, required=False)
-    soups = ui.TextInput(label='Supervisors', style=discord.TextStyle.short, required=False)
-    attendees = ui.TextInput(label='Attendees',style=discord.TextStyle.short , required=True)
     summary = ui.TextInput(label='Operation Summary', style=discord.TextStyle.paragraph, required=True)
-    print(co_host)
-    print(soups)
 
     async def on_submit(self, interaction: discord.Interaction):
-        print(self.co_host)
-        print(self.soups)
-        dossierem = discord.Embed(title=f"OPERATIONS DOSSIER: {self.operation}", color=DSBCommandsCOL)
-        dossierem.add_field(name="", value=f"`Time & Date:` {self.timedate}", inline=False)
+        dossierem = discord.Embed(title=f"OPERATIONS DOSSIER: {self.opinfo[0]} {self.opinfo[1]}", color=DSBCommandsCOL)
+        dossierem.add_field(name="", value=f"`Time & Date:` <t:{self.opinfo[2]}:t> | <t:{self.opinfo[2]}:d>", inline=False)
         if self.co_host == None and self.soups == None:
-            dossierem.add_field(name="", value=f"`Ringleader:` {interaction.user.display_name}\n`Attendees:` {self.attendees}", inline=False)
+            dossierem.add_field(name="", value=f"`Ringleader:` {self.ringleader.mention}\n`Attendees:` {self.attendees}", inline=False)
         elif self.co_host !=None and self.soups==None:
-            dossierem.add_field(name="", value=f"`Ringleader:` {interaction.user.display_name} || `Co-hosts:` {self.co_host}\n`Attendees:` {self.attendees}", inline=False)
+            dossierem.add_field(name="", value=f"`Ringleader:` {self.ringleader.mention} || `Co-hosts:` {self.co_host}\n`Attendees:` {self.attendees}", inline=False)
         elif self.soups !=None and self.co_host==None:
-            dossierem.add_field(name="", value=f"`Ringleader:` {interaction.user.display_name} || `Supervisors:` {self.soups}\n`Attendees:` {self.attendees}", inline=False)
+            dossierem.add_field(name="", value=f"`Ringleader:` {self.ringleader.mention} || `Supervisors:` {self.soups}\n`Attendees:` {self.attendees}", inline=False)
         elif self.soups != None and self.co_host != None:
-            dossierem.add_field(name="", value=f"`Ringleader:` {interaction.user.display_name} || `Co-hosts:` {self.co_host}\n`Supervisors:` {self.soups}\n`Attendees:` {self.attendees}", inline=False)
+            dossierem.add_field(name="", value=f"`Ringleader:` {self.ringleader.mention} || `Co-hosts:` {self.co_host}\n`Supervisors:` {self.soups}\n`Attendees:` {self.attendees}", inline=False)
             
-        dossierem.add_field(name="", value=f"")
-        dossierem.add_field(name="", value=f"`Operation Summary:` {self.summary}", inline=False)
+        dossierem.add_field(name="", value=f"\n`Operation Summary:` {self.summary}", inline=False)
         dossierem.set_image(url=self.picture)
         await interaction.response.send_message(embed=dossierem)
         await interaction.followup.send(embed=discord.Embed(description="<#1058758885361594378> ", color=DSBCommandsCOL), ephemeral=True)
@@ -53,6 +49,7 @@ class OperationCmds(commands.GroupCog, group_name='operation'):
     @app_commands.describe(type="Which operation type?", unix_start="Provide the start time in form of an Unix code.", length="How long will your operation be? Example: '45 minutes'", co_host="Is anyone planed to co-host your operation?",supervisor="Is anyone planned to supervise your operation?")
     @app_commands.choices(type=[
         app_commands.Choice(name="ALPHA", value="ALPHA"),
+        app_commands.Choice(name="DELTA-ALPHA", value="DELTA-ALPHA"),
         app_commands.Choice(name="BRAVO", value="BRAVO"),
         app_commands.Choice(name="CHARLIE", value="CHARLIE"),
         app_commands.Choice(name="DELTA-CHARLIE", value="DELTA-CHARLIE"),
@@ -86,7 +83,7 @@ class OperationCmds(commands.GroupCog, group_name='operation'):
             operationinfo.add_field(name="", value="", inline=False)
             operationinfo.add_field(name="Able to attend?", value="React below to confirm your attendance.", inline=False)
             allowed_mentions = discord.AllowedMentions.all()
-            await interaction.response.send_message(dsbrole.mention, allowed_mentions=None)
+            await interaction.response.send_message(dsbrole, allowed_mentions=None)
             msg_sent = await interaction.edit_original_response(embed=operationinfo)
             op_create_scheduled(type.value, operation_PLs, unix_start, "link", msg_sent.id)
             await msg_sent.add_reaction("<:DSB:1060271947725930496>")
@@ -114,6 +111,7 @@ class OperationCmds(commands.GroupCog, group_name='operation'):
         ])
     @app_commands.choices(op_type=[
         app_commands.Choice(name="ALPHA", value="ALPHA"),
+        app_commands.Choice(name="DELTA-ALPHA", value="DELTA-ALPHA"),
         app_commands.Choice(name="BRAVO", value="BRAVO"),
         app_commands.Choice(name="CHARLIE", value="CHARLIE"),
         app_commands.Choice(name="DELTA-CHARLIE", value="DELTA-CHARLIE"),
@@ -135,7 +133,7 @@ class OperationCmds(commands.GroupCog, group_name='operation'):
                 operation_pal = random_oppal(3)
                 operationinfo = discord.Embed(title=f"<:DSB:1060271947725930496> Spontaneous operation!", description=f"Operation `{op_type} {operation_pal}` is currently being hosted by **{user.display_name}**.\n\n`Voice Channel` - <#{vc_id_u}>\n`Profile link` - {profile_link_u}\n`Current status` - {status}.", color=DSBCommandsCOL)
                 allowed_mentions = discord.AllowedMentions.all()
-                await interaction.response.send_message(dsbrole.mention, allowed_mentions=None)
+                await interaction.response.send_message(dsbrole, allowed_mentions=None)
                 msg_sent = await interaction.edit_original_response(embed=operationinfo)
                 op_create_spontaneous(op_type, operation_pal, msg_sent.id)
             else:
@@ -144,7 +142,7 @@ class OperationCmds(commands.GroupCog, group_name='operation'):
                     op_ann = await interaction.channel.fetch_message(opinfo[6])
                     embed = discord.Embed(title=f"<:DSB:1060271947725930496> Scheduled operation!", description=f"Operation `{opinfo[0]} {opinfo[1]}` is now commencing.\n\n`Voice Channel` - <#{vc_id_u}>\n`Profile link` - {profile_link_u}\n`Current status` - {status}", color=DSBCommandsCOL)
                     allowed_mentions = discord.AllowedMentions.all()
-                    await op_ann.reply(dsbrole.mention, allowed_mentions=None, embed=embed)
+                    await op_ann.reply(dsbrole, allowed_mentions=None, embed=embed)
                     succemb = discord.Embed(description="Operation started successfully.", color=DSBCommandsCOL)
                     await interaction.response.send_message(embed=succemb, ephemeral=True)  
                 else:
@@ -177,11 +175,15 @@ class OperationCmds(commands.GroupCog, group_name='operation'):
                 await interaction.response.send_message(embed=embed)
 
     @app_commands.command(name="dossier", description="Used to write an operation dossier.")
-    @app_commands.describe(operation="Example: ECHO XYZ")
-    async def dossier(self, interaction:discord.Interaction, operation:str, picture:discord.Attachment):
+    @app_commands.describe(pals="Example: XYZ", ringleader="The host of the operation, normally that would be you.", co_hosts="If anyone co-hosted your operation they would go here.", supervisors="If anyone soupervised your operation, they would go here.", attendees="Your attendance list goes here. Make sure to seperate the mentions using a comma.")
+    async def dossier(self, interaction:discord.Interaction, pals:str, picture:discord.Attachment, ringleader:discord.Member, attendees:str=None, supervisors:str=None, co_hosts:str=None):
         if ITMR_A(interaction.user):
-            return await interaction.response.send_modal(DossierModal(operation=operation, picture=picture))
-
+            if op_get_info(pals) == None:
+                embed = discord.Embed(description=f"Operation with PALs `{pals}` not found!", color=ErrorCOL)
+                await interaction.response.send_message(embed=embed, ephemeral=True)
+            else:
+                return await interaction.response.send_modal(DossierModal(operation=pals, picture=picture, ringleader=ringleader, co_host=co_hosts, soups=supervisors, attendees=attendees))
+    
     @app_commands.command(name="cancel", description="Used to cancel an existing operation.")
     async def cancel(self, interaction:discord.Interaction, pal:str, reason:str):
         if DSBMEMBER(interaction.user):
@@ -195,7 +197,7 @@ class OperationCmds(commands.GroupCog, group_name='operation'):
                     embed = discord.Embed(description=f"Operation `{result[0]} {result[1]}` has been cancelled.", color=ErrorCOL)
                     op_cancel(pal)
                     embed.add_field(name="", value=f"*Reason: {reason}*")
-                    await interaction.response.send_message(embed=embed, ephemeral=True)
+                    await interaction.response.send_message(embed=discord.Embed(title="<:dsbbotSuccess:953641647802056756> Successfully cancelled "), ephemeral=True)
                     await op_ann.edit(embed=op_emb)
                     await op_ann.reply(embed=embed)
                 else:

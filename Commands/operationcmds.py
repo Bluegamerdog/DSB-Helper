@@ -64,7 +64,7 @@ class OperationCmds(commands.GroupCog, group_name='operation'):
         app_commands.Choice(name="DELTA-GOLF", value="DELTA-GOLF"),
         app_commands.Choice(name="HOTEL", value="HOTEL"),
         ])
-    async def announce(self, interaction: discord.Interaction, type:app_commands.Choice[str], unix_start:str, length:str, co_host:discord.Member=None, supervisor:discord.Member=None,):
+    async def announce(self, interaction: discord.Interaction, type:app_commands.Choice[str], unix_start:int, length:str, co_host:discord.Member=None, supervisor:discord.Member=None,):
         user = interaction.user
         if ITMR_A(user):
             operation_PLs = random_oppal(3)

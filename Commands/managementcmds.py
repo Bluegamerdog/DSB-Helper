@@ -243,7 +243,7 @@ class ManagementCmds(commands.Cog):
             await member.send(embed = discord.Embed(title=f"You have been kicked from Defensive Squadron Bravo.",description=f"**Reason:** {reason}", color=DarkRedCOL))
         except Exception as e:
             print(e)
-            await interaction.response.send_message(embed=discord.Embed(color=ErrorCOL, title="<:dsbbotFailed:953641818057216050> Error!", description=f"An error occurred while accepting {username}: {str(e)}"), ephemeral=True)
+            await interaction.response.send_message(embed=discord.Embed(color=ErrorCOL, title="<:dsbbotFailed:953641818057216050> Error!", description=f"An error occurred while trying to kick {username}: {str(e)}"), ephemeral=True)
 
 
     @app_commands.command(name="excuse", description="Changes the quota for a user for the current block. [DSBPC+]")

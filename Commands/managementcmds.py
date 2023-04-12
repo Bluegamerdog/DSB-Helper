@@ -235,11 +235,12 @@ class ManagementCmds(commands.Cog):
             kickembed = discord.Embed(title=f"<:DSB:1060271947725930496> Kicked DSB Member", description=f"{member.mention} has been kicked from DSB by {interaction.user.mention}.\n\n**Reason:** {reason}", color=DarkRedCOL)
             kickembed.set_thumbnail(url=member.avatar.url)
             kickembed.set_footer(text=f"ID: {member.id} • {datetime.datetime.now().strftime('%m/%d/%Y %H:%M %p')}")
+            if user:
+                await group.kick_user(user)
+            await member.kick(reason=reason)
             logmsg = await logsch.send(embed=kickembed)
             await interaction.response.send_message(embed = discord.Embed(title=f"<:dsbbotSuccess:953641647802056756> Member removed", description=f"Successfully removed {member.mention} from DSB.\n\n**Reason:** {reason}\n→ [Audit Log]({logmsg.jump_url})", color=DarkRedCOL))
             await member.send(embed = discord.Embed(title=f"You have been kicked from Defensive Squadron Bravo.",description=f"**Reason:** {reason}", color=DarkRedCOL))
-            await group.kick_user(user)
-            await member.kick(reason=reason)
         except Exception as e:
             print(e)
             await interaction.response.send_message(embed=discord.Embed(color=ErrorCOL, title="<:dsbbotFailed:953641818057216050> Error!", description=f"An error occurred while accepting {username}: {str(e)}"), ephemeral=True)
